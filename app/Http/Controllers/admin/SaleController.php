@@ -15,13 +15,34 @@ class SaleController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $sales = Sale::with(['customer', 'brand'])
-            ->orderBy('sale_date', 'desc')
+        $query = Sale::with(['customer', 'brand']);
+        
+        // Date filter - default to start of month to current date
+        $startDate = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', now()->format('Y-m-d'));
+        
+        $query->whereBetween('sale_date', [$startDate, $endDate]);
+        
+        $sales = $query->orderBy('sale_date', 'desc')
             ->orderBy('created_at', 'desc')
-            ->get();
-        return view('admin.sales.index', compact('sales'));
+            ->paginate(15);
+        
+        return view('admin.sales.index', compact('sales', 'startDate', 'endDate'));
+    }
+    
+    public function searchCustomers(Request $request)
+    {
+        $search = $request->input('search', '');
+        
+        $customers = Customer::where('name', 'like', '%' . $search . '%')
+            ->orWhere('phone', 'like', '%' . $search . '%')
+            ->orWhere('email', 'like', '%' . $search . '%')
+            ->limit(10)
+            ->get(['id', 'name', 'phone', 'email']);
+        
+        return response()->json($customers);
     }
 
     /**
@@ -43,8 +64,9 @@ class SaleController extends Controller
             'customer_id' => 'required|exists:customers,id',
             'brand_id' => 'required|exists:brands,id',
             'quantity' => 'required|integer|min:1',
-            'price' => 'nullable|numeric|min:0',
+            'price' => 'required|numeric|min:0',
             'sale_date' => 'required|date',
+            'is_paid' => 'nullable|boolean',
             'notes' => 'nullable|string',
         ]);
 
@@ -98,9 +120,8 @@ class SaleController extends Controller
     public function edit(string $id)
     {
         $sale = Sale::findOrFail($id);
-        $customers = Customer::orderBy('name')->get();
         $brands = Brand::with('inventory')->get();
-        return view('admin.sales.edit', compact('sale', 'customers', 'brands'));
+        return view('admin.sales.edit', compact('sale', 'brands'));
     }
 
     /**
@@ -112,8 +133,9 @@ class SaleController extends Controller
             'customer_id' => 'required|exists:customers,id',
             'brand_id' => 'required|exists:brands,id',
             'quantity' => 'required|integer|min:1',
-            'price' => 'nullable|numeric|min:0',
+            'price' => 'required|numeric|min:0',
             'sale_date' => 'required|date',
+            'is_paid' => 'nullable|boolean',
             'notes' => 'nullable|string',
         ]);
 

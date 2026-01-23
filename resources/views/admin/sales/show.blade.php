@@ -15,10 +15,10 @@
             <div class="col-md-6">
                 <p><strong>Customer:</strong> {{ $sale->customer->name }}</p>
                 <p><strong>Brand:</strong> {{ $sale->brand->name }}</p>
-                <p><strong>Quantity:</strong> <span class="badge bg-primary">{{ $sale->quantity }}</span></p>
+                <p><strong>Quantity:</strong> {{ $sale->quantity }}</p>
             </div>
             <div class="col-md-6">
-                <p><strong>Price:</strong> {{ $sale->price ? '$' . number_format($sale->price, 2) : 'N/A' }}</p>
+                <p><strong>Price:</strong> {{ $sale->price ? number_format($sale->price, 0) : 'N/A' }}</p>
                 <p><strong>Sale Date:</strong> {{ $sale->sale_date->format('M d, Y') }}</p>
                 <p><strong>Notes:</strong> {{ $sale->notes ?? 'N/A' }}</p>
             </div>

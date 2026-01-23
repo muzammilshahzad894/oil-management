@@ -21,7 +21,7 @@ class CustomerController extends Controller
                   ->orWhere('email', 'like', '%' . $request->search . '%');
         }
         
-        $customers = $query->withCount('sales')->orderBy('name')->get();
+        $customers = $query->withCount('sales')->orderBy('name')->paginate(15);
         return view('admin.customers.index', compact('customers'));
     }
 

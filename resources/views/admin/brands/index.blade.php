@@ -11,54 +11,72 @@
         </a>
     </div>
     <div class="card-body">
-        @if($brands->count() > 0)
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Description</th>
-                            <th>Stock</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($brands as $brand)
-                            <tr>
-                                <td><strong>{{ $brand->name }}</strong></td>
-                                <td>{{ Str::limit($brand->description, 50) ?? 'N/A' }}</td>
-                                <td>
-                                    @if($brand->inventory)
-                                        <span class="badge {{ $brand->inventory->quantity < 10 ? 'bg-danger' : 'bg-success' }}">
-                                            {{ $brand->inventory->quantity }}
-                                        </span>
-                                    @else
-                                        <span class="badge bg-secondary">No Stock</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <a href="{{ route('admin.brands.show', $brand->id) }}" class="btn btn-sm btn-info" title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.brands.edit', $brand->id) }}" class="btn btn-sm btn-warning" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.brands.destroy', $brand->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this brand?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @else
-            <p class="text-muted text-center py-4">No brands found. <a href="{{ route('admin.brands.create') }}">Add your first brand</a></p>
-        @endif
+        <div class="mb-3">
+            <input type="text" 
+                   id="brandSearch" 
+                   class="form-control" 
+                   placeholder="Search brands..." 
+                   value="{{ request('search') }}"
+                   autocomplete="off">
+        </div>
+        
+        <div id="tableContainer">
+            @include('admin.brands.partials.table', ['brands' => $brands])
+        </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    let searchTimeout;
+    const searchInput = document.getElementById('brandSearch');
+    const tableContainer = document.getElementById('tableContainer');
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const search = this.value.trim();
+        
+        searchTimeout = setTimeout(() => {
+            if (search.length === 0) {
+                window.location.href = '{{ route("admin.brands.index") }}';
+                return;
+            }
+            
+            tableContainer.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Searching...</p></div>';
+            
+            fetch('{{ route("admin.brands.index") }}?search=' + encodeURIComponent(search))
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newTable = doc.getElementById('tableContainer');
+                    if (newTable) {
+                        tableContainer.innerHTML = newTable.innerHTML;
+                    }
+                })
+                .catch(error => {
+                    tableContainer.innerHTML = '<div class="alert alert-danger">Error loading results</div>';
+                });
+        }, 500);
+    });
+    
+    function confirmDelete(id, name) {
+        Swal.fire({
+            title: 'Are you sure?',
+            html: `<p>You want to delete brand <strong>${name}</strong>?</p><p class="text-danger"><small>This action cannot be undone.</small></p>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('delete-form-' + id).submit();
+            }
+        });
+    }
+</script>
 @endsection

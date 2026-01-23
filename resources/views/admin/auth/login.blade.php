@@ -169,6 +169,14 @@
                                 </div>
                             @endif
                             
+                            @if(session('error'))
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-exclamation-circle me-2"></i>
+                                    {{ session('error') }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            @endif
+                            
                             @if(session('success'))
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                                     <i class="fas fa-check-circle me-2"></i>
@@ -177,7 +185,7 @@
                                 </div>
                             @endif
                             
-                            <form method="POST" action="{{ route('admin.login') }}">
+                            <form method="POST" action="{{ route('admin.login') }}" id="loginForm">
                                 @csrf
                                 
                                 <div class="mb-4">
@@ -237,9 +245,10 @@
                                     </div>
                                 </div>
                                 
-                                <button type="submit" class="btn btn-login btn-primary w-100 mb-3">
-                                    <i class="fas fa-sign-in-alt me-2"></i>
-                                    Sign In
+                                <button type="submit" class="btn btn-login btn-primary w-100 mb-3" id="loginBtn">
+                                    <span class="spinner-border spinner-border-sm d-none me-2" role="status" id="loginSpinner"></span>
+                                    <i class="fas fa-sign-in-alt me-2" id="loginIcon"></i>
+                                    <span id="loginText">Sign In</span>
                                 </button>
                                 
                                 <div class="text-center">
@@ -284,6 +293,19 @@
                 bsAlert.close();
             });
         }, 5000);
+        
+        // Login form submit loading
+        document.getElementById('loginForm').addEventListener('submit', function() {
+            const btn = document.getElementById('loginBtn');
+            const spinner = document.getElementById('loginSpinner');
+            const icon = document.getElementById('loginIcon');
+            const text = document.getElementById('loginText');
+            
+            btn.disabled = true;
+            spinner.classList.remove('d-none');
+            icon.classList.add('d-none');
+            text.textContent = 'Signing in...';
+        });
     </script>
 </body>
 </html>

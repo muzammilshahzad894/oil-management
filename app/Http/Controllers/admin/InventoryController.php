@@ -12,9 +12,17 @@ class InventoryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $inventory = Inventory::with('brand')->orderBy('quantity', 'asc')->get();
+        $query = Inventory::with('brand');
+        
+        if ($request->has('search') && $request->search) {
+            $query->whereHas('brand', function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%');
+            });
+        }
+        
+        $inventory = $query->orderBy('quantity', 'asc')->paginate(15);
         return view('admin.inventory.index', compact('inventory'));
     }
 

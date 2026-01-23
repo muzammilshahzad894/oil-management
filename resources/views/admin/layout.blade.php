@@ -268,6 +268,13 @@
         /* Content Area */
         .content-area {
             padding: 2rem;
+            padding-right: 2rem;
+        }
+        
+        @media (max-width: 992px) {
+            .content-area {
+                padding: 1rem;
+            }
         }
         
         /* Cards */
@@ -486,6 +493,109 @@
             margin-bottom: 0.5rem;
         }
         
+        /* Remove number input spinners */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        
+        /* Action buttons - smaller and better looking */
+        .btn-sm {
+            padding: 0.375rem 0.625rem;
+            font-size: 0.75rem;
+            line-height: 1.2;
+            border-radius: 6px;
+            min-width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-sm i {
+            font-size: 0.875rem;
+        }
+        
+        /* Back button alignment */
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-secondary i {
+            line-height: 1;
+        }
+        
+        /* Modal z-index fix */
+        .modal {
+            z-index: 1060 !important;
+        }
+        
+        .modal-backdrop {
+            z-index: 1050 !important;
+        }
+        
+        .modal-dialog {
+            z-index: 1061 !important;
+        }
+        
+        .modal-content {
+            z-index: 1062 !important;
+        }
+        
+        /* Date input styling */
+        input[type="date"] {
+            cursor: pointer;
+            position: relative;
+        }
+        
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: auto;
+            height: auto;
+            color: transparent;
+            background: transparent;
+        }
+        
+        input[type="date"]::-webkit-inner-spin-button,
+        input[type="date"]::-webkit-clear-button {
+            z-index: 1;
+        }
+        
+        /* Ensure filter buttons same height */
+        .row.align-items-end .btn {
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Fixed height for searchable dropdowns */
+        #customer_dropdown,
+        #brand_dropdown {
+            max-height: 250px !important;
+            height: auto;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
+        .dropdown-menu {
+            max-height: 250px !important;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
         /* Mobile Responsive */
         @media (max-width: 992px) {
             .sidebar {
@@ -594,6 +704,23 @@
             padding: 1.5rem;
         }
         
+        /* Fix modal blinking issue */
+        .modal {
+            pointer-events: auto;
+        }
+        
+        .modal-backdrop {
+            pointer-events: none;
+        }
+        
+        .modal-dialog {
+            pointer-events: auto;
+        }
+        
+        .modal-content {
+            pointer-events: auto;
+        }
+        
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -655,6 +782,12 @@
                 <a href="{{ route('admin.sales.index') }}" class="{{ request()->routeIs('admin.sales.*') ? 'active' : '' }}">
                     <i class="fas fa-shopping-cart"></i>
                     <span>Sales</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('admin.reports.customer') }}" class="{{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Reports</span>
                 </a>
             </li>
         </ul>

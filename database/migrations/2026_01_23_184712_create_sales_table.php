@@ -16,8 +16,9 @@ return new class extends Migration
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
             $table->foreignId('brand_id')->constrained('brands')->onDelete('cascade');
             $table->integer('quantity');
-            $table->decimal('price', 10, 2)->nullable();
+            $table->decimal('price', 10, 2);
             $table->date('sale_date');
+            $table->boolean('is_paid')->default(false);
             $table->text('notes')->nullable();
             $table->timestamps();
         });

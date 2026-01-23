@@ -20,7 +20,8 @@
     <a href="{{ route('admin.brands.index') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left me-2"></i>Back
     </a>
-    <button type="submit" class="btn btn-primary">
-        <i class="fas fa-save me-2"></i>{{ isset($brand) ? 'Update' : 'Save' }} Brand
+    <button type="submit" class="btn btn-primary" id="submitBtn">
+        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+        <i class="fas fa-save me-2"></i><span class="btn-text">{{ isset($brand) ? 'Update' : 'Save' }} Brand</span>
     </button>
 </div>

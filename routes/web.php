@@ -8,6 +8,7 @@ use App\Http\Controllers\admin\CustomerController;
 use App\Http\Controllers\admin\InventoryController;
 use App\Http\Controllers\admin\SaleController;
 use App\Http\Controllers\admin\ProfileController;
+use App\Http\Controllers\admin\ReportController;
 
 // check if user is already logged in then redirect to dashboard
 Route::middleware(['guest'])->group(function () {
@@ -16,7 +17,7 @@ Route::middleware(['guest'])->group(function () {
     // define login route and redirect to admin.login
     Route::get('/login', function () {
         return redirect()->route('admin.login');
-    });
+    })->name('login');
 });
 
 // protected routes
@@ -69,6 +70,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/inventory/{id}/add-stock', [InventoryController::class, 'addStock'])->name('admin.inventory.add-stock');
     
     // Sales
+    Route::get('/admin/sales/search-customers', [SaleController::class, 'searchCustomers'])->name('admin.sales.search-customers');
     Route::resource('admin/sales', SaleController::class)->names([
         'index' => 'admin.sales.index',
         'create' => 'admin.sales.create',
@@ -78,4 +80,8 @@ Route::middleware(['auth'])->group(function () {
         'update' => 'admin.sales.update',
         'destroy' => 'admin.sales.destroy',
     ]);
+    
+    // Reports
+    Route::get('/admin/reports/customer', [ReportController::class, 'customer'])->name('admin.reports.customer');
+    Route::get('/admin/reports/customer/export', [ReportController::class, 'exportExcel'])->name('admin.reports.customer.export');
 });

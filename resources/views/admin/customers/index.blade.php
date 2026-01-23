@@ -12,62 +12,72 @@
     </div>
     <div class="card-body">
         <div class="mb-3">
-            <form method="GET" action="{{ route('admin.customers.index') }}" class="row g-3">
-                <div class="col-md-10">
-                    <input type="text" name="search" class="form-control" placeholder="Search by name, phone, or email..." value="{{ request('search') }}">
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-search me-2"></i>Search
-                    </button>
-                </div>
-            </form>
+            <input type="text" 
+                   id="customerSearch" 
+                   class="form-control" 
+                   placeholder="Search by name, phone, or email..." 
+                   value="{{ request('search') }}"
+                   autocomplete="off">
         </div>
         
-        @if($customers->count() > 0)
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Phone</th>
-                            <th>Email</th>
-                            <th>Total Purchases</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($customers as $customer)
-                            <tr>
-                                <td><strong>{{ $customer->name }}</strong></td>
-                                <td>{{ $customer->phone ?? 'N/A' }}</td>
-                                <td>{{ $customer->email ?? 'N/A' }}</td>
-                                <td>
-                                    <span class="badge bg-primary">{{ $customer->sales_count }} sales</span>
-                                </td>
-                                <td>
-                                    <a href="{{ route('admin.customers.show', $customer->id) }}" class="btn btn-sm btn-info" title="View History">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.customers.edit', $customer->id) }}" class="btn btn-sm btn-warning" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.customers.destroy', $customer->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this customer?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @else
-            <p class="text-muted text-center py-4">No customers found. <a href="{{ route('admin.customers.create') }}">Add your first customer</a></p>
-        @endif
+        <div id="tableContainer">
+            @include('admin.customers.partials.table', ['customers' => $customers])
+        </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    let searchTimeout;
+    const searchInput = document.getElementById('customerSearch');
+    const tableContainer = document.getElementById('tableContainer');
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const search = this.value.trim();
+        
+        searchTimeout = setTimeout(() => {
+            if (search.length === 0) {
+                window.location.href = '{{ route("admin.customers.index") }}';
+                return;
+            }
+            
+            // Show loading
+            tableContainer.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Searching...</p></div>';
+            
+            fetch('{{ route("admin.customers.index") }}?search=' + encodeURIComponent(search))
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newTable = doc.getElementById('tableContainer');
+                    if (newTable) {
+                        tableContainer.innerHTML = newTable.innerHTML;
+                    }
+                })
+                .catch(error => {
+                    tableContainer.innerHTML = '<div class="alert alert-danger">Error loading results</div>';
+                });
+        }, 500);
+    });
+    
+    function confirmDelete(id, name) {
+        Swal.fire({
+            title: 'Are you sure?',
+            html: `<p>You want to delete customer <strong>${name}</strong>?</p><p class="text-danger"><small>This action cannot be undone.</small></p>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('delete-form-' + id).submit();
+            }
+        });
+    }
+</script>
 @endsection

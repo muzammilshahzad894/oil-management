@@ -13,12 +13,14 @@ class Sale extends Model
         'quantity',
         'price',
         'sale_date',
+        'is_paid',
         'notes',
     ];
 
     protected $casts = [
         'sale_date' => 'date',
         'price' => 'decimal:2',
+        'is_paid' => 'boolean',
     ];
 
     /**

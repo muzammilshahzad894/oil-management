@@ -34,7 +34,8 @@
     <a href="{{ route('admin.customers.index') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left me-2"></i>Back
     </a>
-    <button type="submit" class="btn btn-primary">
-        <i class="fas fa-save me-2"></i>{{ isset($customer) ? 'Update' : 'Save' }} Customer
+    <button type="submit" class="btn btn-primary" id="submitBtn">
+        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+        <i class="fas fa-save me-2"></i><span class="btn-text">{{ isset($customer) ? 'Update' : 'Save' }} Customer</span>
     </button>
 </div>
