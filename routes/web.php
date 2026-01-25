@@ -71,6 +71,7 @@ Route::middleware(['auth'])->group(function () {
     
     // Sales
     Route::get('/admin/sales/search-customers', [SaleController::class, 'searchCustomers'])->name('admin.sales.search-customers');
+    Route::get('/admin/sales/{id}/receipt', [SaleController::class, 'receipt'])->name('admin.sales.receipt');
     Route::resource('admin/sales', SaleController::class)->names([
         'index' => 'admin.sales.index',
         'create' => 'admin.sales.create',

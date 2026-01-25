@@ -96,8 +96,16 @@
     <a href="{{ route('admin.sales.index') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left me-2"></i>Back
     </a>
-    <button type="submit" class="btn btn-primary" id="submitBtn">
-        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-        <i class="fas fa-save me-2"></i><span class="btn-text">{{ isset($sale) ? 'Update' : 'Save' }}</span>
-    </button>
+    <div>
+        @if(!isset($sale))
+        <button type="submit" name="action" value="save_and_print" class="btn btn-success me-2" id="submitPrintBtn">
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            <i class="fas fa-print me-2"></i><span class="btn-text">Save and Print</span>
+        </button>
+        @endif
+        <button type="submit" name="action" value="save" class="btn btn-primary" id="submitBtn">
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            <i class="fas fa-save me-2"></i><span class="btn-text">{{ isset($sale) ? 'Update' : 'Save' }}</span>
+        </button>
+    </div>
 </div>

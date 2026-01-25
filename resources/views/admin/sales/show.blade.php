@@ -6,9 +6,14 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="fas fa-shopping-cart me-2"></i>Sale Information</span>
-        <a href="{{ route('admin.sales.edit', $sale->id) }}" class="btn btn-sm btn-warning">
-            <i class="fas fa-edit me-2"></i>Edit
-        </a>
+        <div>
+            <a href="{{ route('admin.sales.receipt', $sale->id) }}" target="_blank" class="btn btn-sm btn-success me-2">
+                <i class="fas fa-print me-2"></i>Get Receipt
+            </a>
+            <a href="{{ route('admin.sales.edit', $sale->id) }}" class="btn btn-sm btn-warning">
+                <i class="fas fa-edit me-2"></i>Edit
+            </a>
+        </div>
     </div>
     <div class="card-body">
         <div class="row">

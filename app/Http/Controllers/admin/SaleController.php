@@ -95,6 +95,12 @@ class SaleController extends Controller
             
             DB::commit();
             
+            // Check if save and print was clicked
+            if ($request->input('action') === 'save_and_print') {
+                return redirect()->route('admin.sales.receipt', ['id' => $sale->id, 'autoprint' => 1])
+                    ->with('success', 'Sale recorded successfully and inventory updated.');
+            }
+            
             return redirect()->route('admin.sales.index')
                 ->with('success', 'Sale recorded successfully and inventory updated.');
         } catch (\Exception $e) {
@@ -112,6 +118,15 @@ class SaleController extends Controller
     {
         $sale = Sale::with(['customer', 'brand'])->findOrFail($id);
         return view('admin.sales.show', compact('sale'));
+    }
+    
+    /**
+     * Display receipt for printing
+     */
+    public function receipt(string $id)
+    {
+        $sale = Sale::with(['customer', 'brand'])->findOrFail($id);
+        return view('admin.sales.receipt', compact('sale'));
     }
 
     /**

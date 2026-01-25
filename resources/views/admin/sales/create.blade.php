@@ -143,11 +143,24 @@
     });
     
     // Form submit loading
-    document.getElementById('saleForm').addEventListener('submit', function() {
-        const btn = document.getElementById('submitBtn');
-        btn.disabled = true;
-        btn.querySelector('.spinner-border').classList.remove('d-none');
-        btn.querySelector('.btn-text').textContent = 'Saving...';
+    document.getElementById('saleForm').addEventListener('submit', function(e) {
+        const clickedButton = e.submitter || document.activeElement;
+        const isPrintButton = clickedButton && clickedButton.name === 'action' && clickedButton.value === 'save_and_print';
+        
+        const btn = isPrintButton ? document.getElementById('submitPrintBtn') : document.getElementById('submitBtn');
+        const otherBtn = isPrintButton ? document.getElementById('submitBtn') : document.getElementById('submitPrintBtn');
+        
+        if (btn) {
+            btn.disabled = true;
+            const spinner = btn.querySelector('.spinner-border');
+            const text = btn.querySelector('.btn-text');
+            if (spinner) spinner.classList.remove('d-none');
+            if (text) text.textContent = isPrintButton ? 'Saving & Printing...' : 'Saving...';
+        }
+        
+        if (otherBtn) {
+            otherBtn.disabled = true;
+        }
     });
 </script>
 @endsection
