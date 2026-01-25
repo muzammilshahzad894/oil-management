@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('brand_id')->constrained('brands')->onDelete('cascade');
             $table->integer('quantity')->default(0);
             $table->timestamps();
+            $table->softDeletes();
             
             $table->unique('brand_id'); // One inventories record per brand
         });

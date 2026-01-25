@@ -32,8 +32,14 @@ class ReportController extends Controller
         }
         
         // Customer is selected - build query
-        $baseQuery = Sale::with(['customer', 'brand'])
-            ->where('customer_id', $request->customer_id);
+        $baseQuery = Sale::with([
+            'customer' => function($q) {
+                $q->withTrashed();
+            },
+            'brand' => function($q) {
+                $q->withTrashed();
+            }
+        ])->where('customer_id', $request->customer_id);
         
         // Date filter - use provided dates or default to last month to current date for better coverage
         $startDate = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));

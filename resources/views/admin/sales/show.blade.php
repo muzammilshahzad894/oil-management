@@ -18,8 +18,22 @@
     <div class="card-body">
         <div class="row">
             <div class="col-md-6">
-                <p><strong>Customer:</strong> {{ $sale->customer->name }}</p>
-                <p><strong>Brand:</strong> {{ $sale->brand->name }}</p>
+                <p><strong>Customer:</strong> 
+                    {{ $sale->customer->name }}
+                    @if($sale->customer->trashed())
+                        <span class="badge bg-danger ms-2" title="This customer has been deleted">
+                            <i class="fas fa-trash"></i> Deleted
+                        </span>
+                    @endif
+                </p>
+                <p><strong>Brand:</strong> 
+                    {{ $sale->brand->name }}
+                    @if($sale->brand->trashed())
+                        <span class="badge bg-danger ms-2" title="This brand has been deleted">
+                            <i class="fas fa-trash"></i> Deleted
+                        </span>
+                    @endif
+                </p>
                 <p><strong>Quantity:</strong> {{ $sale->quantity }}</p>
             </div>
             <div class="col-md-6">

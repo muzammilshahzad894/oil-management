@@ -539,6 +539,7 @@
         
         .modal-backdrop {
             z-index: 1050 !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
         }
         
         .modal-dialog {
@@ -547,6 +548,16 @@
         
         .modal-content {
             z-index: 1062 !important;
+            position: relative;
+        }
+        
+        /* Ensure modals appear above everything */
+        body.modal-open {
+            overflow: hidden;
+        }
+        
+        .modal.show {
+            display: block !important;
         }
         
         /* Date input styling */
@@ -588,12 +599,25 @@
             height: auto;
             overflow-y: auto;
             overflow-x: hidden;
+            z-index: 9999 !important;
+            position: absolute !important;
         }
         
         .dropdown-menu {
             max-height: 250px !important;
             overflow-y: auto;
             overflow-x: hidden;
+            z-index: 9999 !important;
+        }
+        
+        /* Ensure dropdowns appear above cards */
+        .position-relative {
+            z-index: 1;
+        }
+        
+        .position-relative #customer_dropdown,
+        .position-relative #brand_dropdown {
+            z-index: 9999 !important;
         }
         
         /* Mobile Responsive */

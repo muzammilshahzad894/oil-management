@@ -51,8 +51,22 @@
                         @foreach($sales as $sale)
                             <tr>
                                 <td>{{ $sale->sale_date->format('M d, Y') }}</td>
-                                <td>{{ $sale->customer->name }}</td>
-                                <td>{{ $sale->brand->name }}</td>
+                                <td>
+                                    {{ $sale->customer->name }}
+                                    @if($sale->customer->trashed())
+                                        <span class="badge bg-danger ms-1" title="Deleted customer">
+                                            <i class="fas fa-trash"></i>
+                                        </span>
+                                    @endif
+                                </td>
+                                <td>
+                                    {{ $sale->brand->name }}
+                                    @if($sale->brand->trashed())
+                                        <span class="badge bg-danger ms-1" title="Deleted brand">
+                                            <i class="fas fa-trash"></i>
+                                        </span>
+                                    @endif
+                                </td>
                                 <td><span>{{ $sale->quantity }}</span></td>
                                 <td>{{ number_format($sale->price, 0) }}</td>
                                 <td>

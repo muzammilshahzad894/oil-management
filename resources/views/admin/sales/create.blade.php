@@ -58,6 +58,17 @@
         }, 500);
     });
     
+    // Set initial customer value if passed via URL
+    @if(isset($selectedCustomerId) && $selectedCustomerId)
+        @php
+            $selectedCustomer = \App\Models\Customer::find($selectedCustomerId);
+        @endphp
+        @if($selectedCustomer)
+            customerSearch.value = '{{ $selectedCustomer->name }}';
+            customerId.value = '{{ $selectedCustomerId }}';
+        @endif
+    @endif
+    
     // Handle customer selection
     document.addEventListener('click', function(e) {
         if (e.target.closest('.customer-option')) {
@@ -167,11 +178,20 @@
 
 @section('styles')
 <style>
+    #customer_dropdown,
+    #brand_dropdown {
+        max-height: 250px !important;
+        overflow-y: auto;
+        overflow-x: hidden;
+        z-index: 9999 !important;
+        position: absolute !important;
+    }
+    
     .dropdown-menu {
         position: absolute;
         top: 100%;
         left: 0;
-        z-index: 1000;
+        z-index: 9999 !important;
         margin-top: 0.25rem;
     }
     
@@ -186,6 +206,10 @@
     
     .customer-option, .brand-option {
         display: block;
+    }
+    
+    .position-relative {
+        z-index: 1;
     }
 </style>
 @endsection

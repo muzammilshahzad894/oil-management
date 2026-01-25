@@ -43,9 +43,9 @@
                             </form>
                             
                             <!-- Add Stock Modal -->
-                            <div class="modal fade" id="addStockModal{{ $item->id }}" tabindex="-1" data-bs-backdrop="static" style="z-index: 1060;">
+                            <div class="modal fade" id="addStockModal{{ $item->id }}" tabindex="-1" data-bs-backdrop="static">
                                 <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content" style="z-index: 1061;">
+                                    <div class="modal-content">
                                         <form action="{{ route('admin.inventory.add-stock', $item->id) }}" method="POST" id="addStockForm{{ $item->id }}">
                                             @csrf
                                             <div class="modal-header">

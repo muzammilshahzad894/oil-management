@@ -87,11 +87,19 @@
         </script>
         
         <style>
+            #brand_dropdown {
+                max-height: 250px !important;
+                overflow-y: auto;
+                overflow-x: hidden;
+                z-index: 9999 !important;
+                position: absolute !important;
+            }
+            
             .dropdown-menu {
                 position: absolute;
                 top: 100%;
                 left: 0;
-                z-index: 1000;
+                z-index: 9999 !important;
                 margin-top: 0.25rem;
             }
             
@@ -106,6 +114,10 @@
             
             .brand-option {
                 display: block;
+            }
+            
+            .position-relative {
+                z-index: 1;
             }
         </style>
     </div>

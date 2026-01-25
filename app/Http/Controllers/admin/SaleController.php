@@ -17,7 +17,14 @@ class SaleController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Sale::with(['customer', 'brand']);
+        $query = Sale::with([
+            'customer' => function($q) {
+                $q->withTrashed();
+            },
+            'brand' => function($q) {
+                $q->withTrashed();
+            }
+        ]);
         
         // Date filter - default to start of month to current date
         $startDate = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));
@@ -48,11 +55,12 @@ class SaleController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
         $customers = Customer::orderBy('name')->get();
         $brands = Brand::with('inventory')->get();
-        return view('admin.sales.create', compact('customers', 'brands'));
+        $selectedCustomerId = $request->input('customer_id');
+        return view('admin.sales.create', compact('customers', 'brands', 'selectedCustomerId'));
     }
 
     /**
@@ -116,7 +124,14 @@ class SaleController extends Controller
      */
     public function show(string $id)
     {
-        $sale = Sale::with(['customer', 'brand'])->findOrFail($id);
+        $sale = Sale::with([
+            'customer' => function($q) {
+                $q->withTrashed();
+            },
+            'brand' => function($q) {
+                $q->withTrashed();
+            }
+        ])->findOrFail($id);
         return view('admin.sales.show', compact('sale'));
     }
     
@@ -125,7 +140,14 @@ class SaleController extends Controller
      */
     public function receipt(string $id)
     {
-        $sale = Sale::with(['customer', 'brand'])->findOrFail($id);
+        $sale = Sale::with([
+            'customer' => function($q) {
+                $q->withTrashed();
+            },
+            'brand' => function($q) {
+                $q->withTrashed();
+            }
+        ])->findOrFail($id);
         return view('admin.sales.receipt', compact('sale'));
     }
 

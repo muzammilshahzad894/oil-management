@@ -184,7 +184,12 @@
             </div>
             <div class="info-row">
                 <span class="info-label">Customer:</span>
-                <span>{{ $sale->customer->name }}</span>
+                <span>
+                    {{ $sale->customer->name }}
+                    @if($sale->customer->trashed())
+                        <small style="color: #dc3545;">(Deleted)</small>
+                    @endif
+                </span>
             </div>
             @if($sale->customer->phone)
             <div class="info-row">

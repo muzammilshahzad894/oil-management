@@ -20,6 +20,9 @@
                             <span class="badge bg-primary">{{ $customer->sales_count }} sales</span>
                         </td>
                         <td>
+                            <a href="{{ route('admin.sales.create', ['customer_id' => $customer->id]) }}" class="btn btn-sm btn-success" title="Add Sale">
+                                <i class="fas fa-shopping-cart"></i>
+                            </a>
                             <a href="{{ route('admin.customers.show', $customer->id) }}" class="btn btn-sm btn-info" title="View History">
                                 <i class="fas fa-eye"></i>
                             </a>

@@ -18,8 +18,14 @@ class DashboardController extends Controller
         $totalSales = Sale::count();
         $totalInventory = Inventory::sum('quantity');
         
-        $recentSales = Sale::with(['customer', 'brand'])
-            ->orderBy('created_at', 'desc')
+        $recentSales = Sale::with([
+            'customer' => function($q) {
+                $q->withTrashed();
+            },
+            'brand' => function($q) {
+                $q->withTrashed();
+            }
+        ])->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
         
