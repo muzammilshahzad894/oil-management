@@ -13,17 +13,19 @@
             @method('PUT')
             @include('admin.brands.partials.form', ['brand' => $brand])
         </form>
-        
-        <script>
-            $(document).ready(function() {
-                $('#brandForm').on('submit', function() {
-                    const $btn = $('#submitBtn');
-                    $btn.prop('disabled', true);
-                    $btn.find('.spinner-border').removeClass('d-none');
-                    $btn.find('.btn-text').text('Updating...');
-                });
-            });
-        </script>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    $(document).ready(function() {
+        $('#brandForm').on('submit', function() {
+            const $btn = $('#submitBtn');
+            $btn.prop('disabled', true);
+            $btn.find('.spinner-border').removeClass('d-none');
+            $btn.find('.btn-text').text('Updating...');
+        });
+    });
+</script>
 @endsection

@@ -12,17 +12,19 @@
             @csrf
             @include('admin.brands.partials.form')
         </form>
-        
-        <script>
-            $(document).ready(function() {
-                $('#brandForm').on('submit', function() {
-                    const $btn = $('#submitBtn');
-                    $btn.prop('disabled', true);
-                    $btn.find('.spinner-border').removeClass('d-none');
-                    $btn.find('.btn-text').text('Saving...');
-                });
-            });
-        </script>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    $(document).ready(function() {
+        $('#brandForm').on('submit', function() {
+            const $btn = $('#submitBtn');
+            $btn.prop('disabled', true);
+            $btn.find('.spinner-border').removeClass('d-none');
+            $btn.find('.btn-text').text('Saving...');
+        });
+    });
+</script>
 @endsection

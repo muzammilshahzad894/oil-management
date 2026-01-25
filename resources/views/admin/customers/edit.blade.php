@@ -13,17 +13,19 @@
             @method('PUT')
             @include('admin.customers.partials.form', ['customer' => $customer])
         </form>
-        
-        <script>
-            $(document).ready(function() {
-                $('#customerForm').on('submit', function() {
-                    const $btn = $('#submitBtn');
-                    $btn.prop('disabled', true);
-                    $btn.find('.spinner-border').removeClass('d-none');
-                    $btn.find('.btn-text').text('Updating...');
-                });
-            });
-        </script>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    $(document).ready(function() {
+        $('#customerForm').on('submit', function() {
+            const $btn = $('#submitBtn');
+            $btn.prop('disabled', true);
+            $btn.find('.spinner-border').removeClass('d-none');
+            $btn.find('.btn-text').text('Updating...');
+        });
+    });
+</script>
 @endsection
