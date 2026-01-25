@@ -785,12 +785,6 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('admin.customers.index') }}" class="{{ request()->routeIs('admin.customers.*') ? 'active' : '' }}">
-                    <i class="fas fa-users"></i>
-                    <span>Customers</span>
-                </a>
-            </li>
-            <li>
                 <a href="{{ route('admin.brands.index') }}" class="{{ request()->routeIs('admin.brands.*') ? 'active' : '' }}">
                     <i class="fas fa-tags"></i>
                     <span>Brands</span>
@@ -800,6 +794,12 @@
                 <a href="{{ route('admin.inventory.index') }}" class="{{ request()->routeIs('admin.inventory.*') ? 'active' : '' }}">
                     <i class="fas fa-warehouse"></i>
                     <span>Inventory</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('admin.customers.index') }}" class="{{ request()->routeIs('admin.customers.*') ? 'active' : '' }}">
+                    <i class="fas fa-users"></i>
+                    <span>Customers</span>
                 </a>
             </li>
             <li>
@@ -896,37 +896,44 @@
         </div>
     </div>
     
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Mobile menu toggle
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-        
-        if (mobileMenuBtn) {
-            mobileMenuBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('show');
-                sidebarOverlay.classList.toggle('show');
+        $(document).ready(function() {
+            // Mobile menu toggle
+            $('#mobileMenuBtn').on('click', function() {
+                $('#sidebar, #sidebarOverlay').toggleClass('show');
             });
-        }
-        
-        if (sidebarOverlay) {
-            sidebarOverlay.addEventListener('click', function() {
-                sidebar.classList.remove('show');
-                sidebarOverlay.classList.remove('show');
+            
+            $('#sidebarOverlay').on('click', function() {
+                $('#sidebar, #sidebarOverlay').removeClass('show');
             });
-        }
-        
-        // Auto-hide alerts after 5 seconds
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(function(alert) {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
+            
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').each(function() {
+                    const bsAlert = new bootstrap.Alert(this);
+                    bsAlert.close();
+                });
+            }, 5000);
+            
+            // Common form loading indicator
+            $('form').on('submit', function() {
+                const $submitBtn = $(this).find('button[type="submit"], #submitBtn');
+                if ($submitBtn.length) {
+                    $submitBtn.prop('disabled', true);
+                    $submitBtn.find('.spinner-border').removeClass('d-none');
+                    const $btnText = $submitBtn.find('.btn-text');
+                    if ($btnText.length) {
+                        $btnText.text($btnText.data('loading-text') || 'Saving...');
+                    }
+                }
             });
-        }, 5000);
+        });
     </script>
     
     @yield('scripts')

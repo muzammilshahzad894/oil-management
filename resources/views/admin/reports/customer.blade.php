@@ -145,65 +145,73 @@
 
 @section('scripts')
 <script>
-    // Customer search with AJAX and debouncing
-    let customerSearchTimeout;
-    const customerSearch = document.getElementById('customer_search');
-    const customerId = document.getElementById('customer_id');
-    const customerDropdown = document.getElementById('customer_dropdown');
-    
-    // Set initial customer value if exists
-    @if(request('customer_id') && isset($selectedCustomer) && $selectedCustomer)
-        customerSearch.value = '{{ $selectedCustomer->name }}';
-        customerId.value = '{{ request('customer_id') }}';
-    @endif
-    
-    customerSearch.addEventListener('input', function() {
-        clearTimeout(customerSearchTimeout);
-        const search = this.value.trim();
+    $(document).ready(function() {
+        // Customer search with AJAX and debouncing
+        let customerSearchTimeout;
+        const $customerSearch = $('#customer_search');
+        const $customerId = $('#customer_id');
+        const $customerDropdown = $('#customer_dropdown');
         
-        if (search.length < 2) {
-            customerDropdown.style.display = 'none';
-            if (search.length === 0) {
-                customerId.value = '';
-            }
-            return;
-        }
+        // Set initial customer value if exists
+        @if(request('customer_id') && isset($selectedCustomer) && $selectedCustomer)
+            $customerSearch.val('{{ $selectedCustomer->name }}');
+            $customerId.val('{{ request('customer_id') }}');
+        @endif
         
-        customerSearchTimeout = setTimeout(() => {
-            customerDropdown.style.display = 'block';
-            customerDropdown.innerHTML = '<div class="text-center p-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>';
+        $customerSearch.on('input', function() {
+            clearTimeout(customerSearchTimeout);
+            const search = $(this).val().trim();
             
-            fetch('{{ route("admin.sales.search-customers") }}?search=' + encodeURIComponent(search))
-                .then(response => response.json())
-                .then(data => {
-                    if (data.length === 0) {
-                        customerDropdown.innerHTML = '<div class="dropdown-item-text text-muted">No customers found</div>';
-                    } else {
-                        customerDropdown.innerHTML = data.map(customer => 
-                            `<a class="dropdown-item customer-option" href="#" data-id="${customer.id}" data-name="${customer.name}">
-                                <strong>${customer.name}</strong><br>
-                                <small class="text-muted">${customer.phone || ''}</small>
-                            </a>`
-                        ).join('');
+            if (search.length < 2) {
+                $customerDropdown.hide();
+                if (search.length === 0) {
+                    $customerId.val('');
+                }
+                return;
+            }
+            
+            customerSearchTimeout = setTimeout(function() {
+                $customerDropdown.show().html('<div class="text-center p-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>');
+                
+                $.ajax({
+                    url: '{{ route("admin.sales.search-customers") }}',
+                    method: 'GET',
+                    data: { search: search },
+                    success: function(data) {
+                        if (data.length === 0) {
+                            $customerDropdown.html('<div class="dropdown-item-text text-muted">No customers found</div>');
+                        } else {
+                            let html = '';
+                            $.each(data, function(index, customer) {
+                                html += '<a class="dropdown-item customer-option" href="#" data-id="' + customer.id + '" data-name="' + customer.name + '">' +
+                                    '<strong>' + customer.name + '</strong><br>' +
+                                    '<small class="text-muted">' + (customer.phone || '') + '</small>' +
+                                    '</a>';
+                            });
+                            $customerDropdown.html(html);
+                        }
+                    },
+                    error: function() {
+                        $customerDropdown.html('<div class="dropdown-item-text text-danger">Error loading customers</div>');
                     }
-                })
-                .catch(error => {
-                    customerDropdown.innerHTML = '<div class="dropdown-item-text text-danger">Error loading customers</div>';
                 });
-        }, 500);
-    });
-    
-    // Handle customer selection
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.customer-option')) {
+            }, 500);
+        });
+        
+        // Handle customer selection
+        $(document).on('click', '.customer-option', function(e) {
             e.preventDefault();
-            const option = e.target.closest('.customer-option');
-            customerId.value = option.dataset.id;
-            customerSearch.value = option.dataset.name;
-            customerDropdown.style.display = 'none';
-        } else if (!e.target.closest('#customer_search') && !e.target.closest('#customer_dropdown')) {
-            customerDropdown.style.display = 'none';
-        }
+            const $option = $(this);
+            $customerId.val($option.data('id'));
+            $customerSearch.val($option.data('name'));
+            $customerDropdown.hide();
+        });
+        
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#customer_search, #customer_dropdown').length) {
+                $customerDropdown.hide();
+            }
+        });
     });
 </script>
 @endsection

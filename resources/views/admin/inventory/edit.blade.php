@@ -15,20 +15,18 @@
         </form>
         
         <script>
-            // Brand search (client-side) - for edit page, brand is disabled but we still need the script
-            const brandSearch = document.getElementById('brand_search');
-            const brandId = document.getElementById('brand_id');
-            
-            // Set initial brand value for edit
-            brandSearch.value = '{{ $inventory->brand->name }}';
-            brandId.value = '{{ $inventory->brand_id }}';
-            
-            // Form submit loading
-            document.getElementById('inventoryForm').addEventListener('submit', function() {
-                const btn = document.getElementById('submitBtn');
-                btn.disabled = true;
-                btn.querySelector('.spinner-border').classList.remove('d-none');
-                btn.querySelector('.btn-text').textContent = 'Updating...';
+            $(document).ready(function() {
+                // Set initial brand value for edit
+                $('#brand_search').val('{{ $inventory->brand->name }}');
+                $('#brand_id').val('{{ $inventory->brand_id }}');
+                
+                // Form submit loading
+                $('#inventoryForm').on('submit', function() {
+                    const $btn = $('#submitBtn');
+                    $btn.prop('disabled', true);
+                    $btn.find('.spinner-border').removeClass('d-none');
+                    $btn.find('.btn-text').text('Updating...');
+                });
             });
         </script>
     </div>

@@ -18,160 +18,177 @@
 
 @section('scripts')
 <script>
-    // Customer search with AJAX and debouncing
-    let customerSearchTimeout;
-    const customerSearch = document.getElementById('customer_search');
-    const customerId = document.getElementById('customer_id');
-    const customerDropdown = document.getElementById('customer_dropdown');
-    
-    customerSearch.addEventListener('input', function() {
-        clearTimeout(customerSearchTimeout);
-        const search = this.value.trim();
+    $(document).ready(function() {
+        // Customer search with AJAX and debouncing
+        let customerSearchTimeout;
+        const $customerSearch = $('#customer_search');
+        const $customerId = $('#customer_id');
+        const $customerDropdown = $('#customer_dropdown');
         
-        if (search.length < 2) {
-            customerDropdown.style.display = 'none';
-            customerId.value = '';
-            return;
-        }
-        
-        customerSearchTimeout = setTimeout(() => {
-            customerDropdown.style.display = 'block';
-            customerDropdown.innerHTML = '<div class="text-center p-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>';
+        $customerSearch.on('input', function() {
+            clearTimeout(customerSearchTimeout);
+            const search = $(this).val().trim();
             
-            fetch('{{ route("admin.sales.search-customers") }}?search=' + encodeURIComponent(search))
-                .then(response => response.json())
-                .then(data => {
-                    if (data.length === 0) {
-                        customerDropdown.innerHTML = '<div class="dropdown-item-text text-muted">No customers found</div>';
-                    } else {
-                        customerDropdown.innerHTML = data.map(customer => 
-                            `<a class="dropdown-item customer-option" href="#" data-id="${customer.id}" data-name="${customer.name}">
-                                <strong>${customer.name}</strong><br>
-                                <small class="text-muted">${customer.phone || ''} ${customer.email || ''}</small>
-                            </a>`
-                        ).join('');
-                    }
-                })
-                .catch(error => {
-                    customerDropdown.innerHTML = '<div class="dropdown-item-text text-danger">Error loading customers</div>';
-                });
-        }, 500);
-    });
-    
-    // Set initial customer value if passed via URL
-    @if(isset($selectedCustomerId) && $selectedCustomerId)
-        @php
-            $selectedCustomer = \App\Models\Customer::find($selectedCustomerId);
-        @endphp
-        @if($selectedCustomer)
-            customerSearch.value = '{{ $selectedCustomer->name }}';
-            customerId.value = '{{ $selectedCustomerId }}';
-        @endif
-    @endif
-    
-    // Handle customer selection
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.customer-option')) {
-            e.preventDefault();
-            const option = e.target.closest('.customer-option');
-            customerId.value = option.dataset.id;
-            customerSearch.value = option.dataset.name;
-            customerDropdown.style.display = 'none';
-        } else if (!e.target.closest('#customer_search') && !e.target.closest('#customer_dropdown')) {
-            customerDropdown.style.display = 'none';
-        }
-    });
-    
-    // Brand search (client-side)
-    let brandSearchTimeout;
-    const brandSearch = document.getElementById('brand_search');
-    const brandId = document.getElementById('brand_id');
-    const brandDropdown = document.getElementById('brand_dropdown');
-    const allBrands = @json($brands);
-    
-    brandSearch.addEventListener('input', function() {
-        clearTimeout(brandSearchTimeout);
-        const search = this.value.toLowerCase().trim();
-        
-        brandSearchTimeout = setTimeout(() => {
-            if (search.length === 0) {
-                brandDropdown.style.display = 'block';
-                showAllBrands();
-            } else {
-                const filtered = allBrands.filter(brand => 
-                    brand.name.toLowerCase().includes(search)
-                );
-                
-                if (filtered.length === 0) {
-                    brandDropdown.innerHTML = '<div class="dropdown-item-text text-muted">No brands found</div>';
-                } else {
-                    brandDropdown.innerHTML = filtered.map(brand => 
-                        `<a class="dropdown-item brand-option" href="#" data-id="${brand.id}" data-stock="${brand.inventory ? brand.inventory.quantity : 0}">
-                            ${brand.name} ${brand.inventory ? '(Stock: ' + brand.inventory.quantity + ')' : '(No Stock)'}
-                        </a>`
-                    ).join('');
-                }
-                brandDropdown.style.display = 'block';
+            if (search.length < 2) {
+                $customerDropdown.hide();
+                $customerId.val('');
+                return;
             }
-        }, 300);
-    });
-    
-    function showAllBrands() {
-        brandDropdown.innerHTML = allBrands.map(brand => 
-            `<a class="dropdown-item brand-option" href="#" data-id="${brand.id}" data-stock="${brand.inventory ? brand.inventory.quantity : 0}">
-                ${brand.name} ${brand.inventory ? '(Stock: ' + brand.inventory.quantity + ')' : '(No Stock)'}
-            </a>`
-        ).join('');
-    }
-    
-    // Handle brand selection
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.brand-option')) {
+            
+            customerSearchTimeout = setTimeout(function() {
+                $customerDropdown.show().html('<div class="text-center p-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>');
+                
+                $.ajax({
+                    url: '{{ route("admin.sales.search-customers") }}',
+                    method: 'GET',
+                    data: { search: search },
+                    success: function(data) {
+                        if (data.length === 0) {
+                            $customerDropdown.html('<div class="dropdown-item-text text-muted">No customers found</div>');
+                        } else {
+                            let html = '';
+                            $.each(data, function(index, customer) {
+                                html += '<a class="dropdown-item customer-option" href="#" data-id="' + customer.id + '" data-name="' + customer.name + '">' +
+                                    '<strong>' + customer.name + '</strong><br>' +
+                                    '<small class="text-muted">' + (customer.phone || '') + ' ' + (customer.email || '') + '</small>' +
+                                    '</a>';
+                            });
+                            $customerDropdown.html(html);
+                        }
+                    },
+                    error: function() {
+                        $customerDropdown.html('<div class="dropdown-item-text text-danger">Error loading customers</div>');
+                    }
+                });
+            }, 500);
+        });
+        
+        // Set initial customer value if passed via URL
+        @if(isset($selectedCustomerId) && $selectedCustomerId)
+            @php
+                $selectedCustomer = \App\Models\Customer::find($selectedCustomerId);
+            @endphp
+            @if($selectedCustomer)
+                $customerSearch.val('{{ $selectedCustomer->name }}');
+                $customerId.val('{{ $selectedCustomerId }}');
+            @endif
+        @endif
+        
+        // Handle customer selection
+        $(document).on('click', '.customer-option', function(e) {
             e.preventDefault();
-            const option = e.target.closest('.brand-option');
-            brandId.value = option.dataset.id;
-            brandSearch.value = allBrands.find(b => b.id == option.dataset.id).name;
-            brandDropdown.style.display = 'none';
+            const $option = $(this);
+            $customerId.val($option.data('id'));
+            $customerSearch.val($option.data('name'));
+            $customerDropdown.hide();
+        });
+        
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#customer_search, #customer_dropdown').length) {
+                $customerDropdown.hide();
+            }
+        });
+        
+        // Brand search (client-side)
+        let brandSearchTimeout;
+        const $brandSearch = $('#brand_search');
+        const $brandId = $('#brand_id');
+        const $brandDropdown = $('#brand_dropdown');
+        const allBrands = @json($brands);
+        
+        function showAllBrands() {
+            let html = '';
+            $.each(allBrands, function(index, brand) {
+                const stock = brand.inventory ? brand.inventory.quantity : 0;
+                html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '" data-stock="' + stock + '">' +
+                    brand.name + (brand.inventory ? ' (Stock: ' + brand.inventory.quantity + ')' : ' (No Stock)') +
+                    '</a>';
+            });
+            $brandDropdown.html(html);
+        }
+        
+        $brandSearch.on('input', function() {
+            clearTimeout(brandSearchTimeout);
+            const search = $(this).val().toLowerCase().trim();
+            
+            brandSearchTimeout = setTimeout(function() {
+                if (search.length === 0) {
+                    showAllBrands();
+                    $brandDropdown.show();
+                } else {
+                    const filtered = allBrands.filter(function(brand) {
+                        return brand.name.toLowerCase().includes(search);
+                    });
+                    
+                    if (filtered.length === 0) {
+                        $brandDropdown.html('<div class="dropdown-item-text text-muted">No brands found</div>');
+                    } else {
+                        let html = '';
+                        $.each(filtered, function(index, brand) {
+                            const stock = brand.inventory ? brand.inventory.quantity : 0;
+                            html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '" data-stock="' + stock + '">' +
+                                brand.name + (brand.inventory ? ' (Stock: ' + brand.inventory.quantity + ')' : ' (No Stock)') +
+                                '</a>';
+                        });
+                        $brandDropdown.html(html);
+                    }
+                    $brandDropdown.show();
+                }
+            }, 300);
+        });
+        
+        // Handle brand selection
+        $(document).on('click', '.brand-option', function(e) {
+            e.preventDefault();
+            const $option = $(this);
+            const brandId = $option.data('id');
+            const brand = allBrands.find(function(b) { return b.id == brandId; });
+            
+            $brandId.val(brandId);
+            $brandSearch.val(brand.name);
+            $brandDropdown.hide();
             
             // Update stock info
-            const stock = option.dataset.stock;
-            const stockInfo = document.getElementById('stock-info');
+            const stock = $option.data('stock');
+            const $stockInfo = $('#stock-info');
             if (stock !== null && stock !== '') {
-                stockInfo.textContent = 'Available stock: ' + stock;
-                stockInfo.className = parseInt(stock) < 10 ? 'text-danger' : 'text-success';
+                $stockInfo.text('Available stock: ' + stock);
+                $stockInfo.removeClass('text-danger text-success').addClass(parseInt(stock) < 10 ? 'text-danger' : 'text-success');
             }
-        } else if (!e.target.closest('#brand_search') && !e.target.closest('#brand_dropdown')) {
-            brandDropdown.style.display = 'none';
-        }
-    });
-    
-    // Show brand dropdown on focus
-    brandSearch.addEventListener('focus', function() {
-        if (this.value.trim() === '') {
-            showAllBrands();
-            brandDropdown.style.display = 'block';
-        }
-    });
-    
-    // Form submit loading
-    document.getElementById('saleForm').addEventListener('submit', function(e) {
-        const clickedButton = e.submitter || document.activeElement;
-        const isPrintButton = clickedButton && clickedButton.name === 'action' && clickedButton.value === 'save_and_print';
+        });
         
-        const btn = isPrintButton ? document.getElementById('submitPrintBtn') : document.getElementById('submitBtn');
-        const otherBtn = isPrintButton ? document.getElementById('submitBtn') : document.getElementById('submitPrintBtn');
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#brand_search, #brand_dropdown').length) {
+                $brandDropdown.hide();
+            }
+        });
         
-        if (btn) {
-            btn.disabled = true;
-            const spinner = btn.querySelector('.spinner-border');
-            const text = btn.querySelector('.btn-text');
-            if (spinner) spinner.classList.remove('d-none');
-            if (text) text.textContent = isPrintButton ? 'Saving & Printing...' : 'Saving...';
-        }
+        // Show brand dropdown on focus
+        $brandSearch.on('focus', function() {
+            if ($(this).val().trim() === '') {
+                showAllBrands();
+                $brandDropdown.show();
+            }
+        });
         
-        if (otherBtn) {
-            otherBtn.disabled = true;
-        }
+        // Form submit loading
+        $('#saleForm').on('submit', function(e) {
+            const $clickedButton = $(document.activeElement);
+            const isPrintButton = $clickedButton.attr('name') === 'action' && $clickedButton.val() === 'save_and_print';
+            
+            const $btn = isPrintButton ? $('#submitPrintBtn') : $('#submitBtn');
+            const $otherBtn = isPrintButton ? $('#submitBtn') : $('#submitPrintBtn');
+            
+            if ($btn.length) {
+                $btn.prop('disabled', true);
+                $btn.find('.spinner-border').removeClass('d-none');
+                $btn.find('.btn-text').text(isPrintButton ? 'Saving & Printing...' : 'Saving...');
+            }
+            
+            if ($otherBtn.length) {
+                $otherBtn.prop('disabled', true);
+            }
+        });
     });
 </script>
 @endsection

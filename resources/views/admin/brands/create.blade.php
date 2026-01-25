@@ -14,11 +14,13 @@
         </form>
         
         <script>
-            document.getElementById('brandForm').addEventListener('submit', function() {
-                const btn = document.getElementById('submitBtn');
-                btn.disabled = true;
-                btn.querySelector('.spinner-border').classList.remove('d-none');
-                btn.querySelector('.btn-text').textContent = 'Saving...';
+            $(document).ready(function() {
+                $('#brandForm').on('submit', function() {
+                    const $btn = $('#submitBtn');
+                    $btn.prop('disabled', true);
+                    $btn.find('.spinner-border').removeClass('d-none');
+                    $btn.find('.btn-text').text('Saving...');
+                });
             });
         </script>
     </div>

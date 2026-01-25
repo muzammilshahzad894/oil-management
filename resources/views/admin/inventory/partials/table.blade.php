@@ -28,7 +28,7 @@
                             @endif
                         </td>
                         <td>
-                            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addStockModal{{ $item->id }}" title="Add Stock">
+                            <button type="button" class="btn btn-sm btn-success" onclick="showAddStockModal({{ $item->id }}, '{{ $item->brand->name }}', {{ $item->quantity }})" title="Add Stock">
                                 <i class="fas fa-plus"></i>
                             </button>
                             <a href="{{ route('admin.inventory.edit', $item->id) }}" class="btn btn-sm btn-warning" title="Edit">
@@ -41,44 +41,6 @@
                                 @csrf
                                 @method('DELETE')
                             </form>
-                            
-                            <!-- Add Stock Modal -->
-                            <div class="modal fade" id="addStockModal{{ $item->id }}" tabindex="-1" data-bs-backdrop="static">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <form action="{{ route('admin.inventory.add-stock', $item->id) }}" method="POST" id="addStockForm{{ $item->id }}">
-                                            @csrf
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Add Stock - {{ $item->brand->name }}</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="mb-3">
-                                                    <label for="quantity{{ $item->id }}" class="form-label">Quantity to Add</label>
-                                                    <input type="number" class="form-control" id="quantity{{ $item->id }}" name="quantity" min="1" required>
-                                                    <small class="text-muted">Current stock: {{ $item->quantity }}</small>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-primary" id="submitBtn{{ $item->id }}">
-                                                    <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-                                                    <span class="btn-text">Add Stock</span>
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <script>
-                                document.getElementById('addStockForm{{ $item->id }}').addEventListener('submit', function() {
-                                    const btn = document.getElementById('submitBtn{{ $item->id }}');
-                                    btn.disabled = true;
-                                    btn.querySelector('.spinner-border').classList.remove('d-none');
-                                    btn.querySelector('.btn-text').textContent = 'Adding...';
-                                });
-                            </script>
                         </td>
                     </tr>
                 @endforeach

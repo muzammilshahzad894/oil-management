@@ -22,7 +22,7 @@ class InventoryController extends Controller
             });
         }
         
-        $inventory = $query->orderBy('quantity', 'asc')->paginate(15);
+        $inventory = $query->orderBy('id', 'asc')->paginate(15);
         return view('admin.inventory.index', compact('inventory'));
     }
 

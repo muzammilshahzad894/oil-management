@@ -109,11 +109,12 @@
 @endsection
 
 @section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     function confirmDelete(id, customerName, brandName) {
         Swal.fire({
             title: 'Are you sure?',
-            html: `<p>You want to delete this sale?</p><p><strong>Customer:</strong> ${customerName}<br><strong>Brand:</strong> ${brandName}</p><p class="text-danger"><small>Inventory will be restored automatically.</small></p>`,
+            html: '<p>You want to delete this sale?</p><p><strong>Customer:</strong> ' + customerName + '<br><strong>Brand:</strong> ' + brandName + '</p><p class="text-danger"><small>Inventory will be restored automatically.</small></p>',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -122,10 +123,9 @@
             cancelButtonText: 'Cancel'
         }).then((result) => {
             if (result.isConfirmed) {
-                document.getElementById('delete-form-' + id).submit();
+                $('#delete-form-' + id).submit();
             }
         });
     }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @endsection

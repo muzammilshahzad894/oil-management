@@ -14,75 +14,82 @@
         </form>
         
         <script>
-            // Brand search (client-side)
-            let brandSearchTimeout;
-            const brandSearch = document.getElementById('brand_search');
-            const brandId = document.getElementById('brand_id');
-            const brandDropdown = document.getElementById('brand_dropdown');
-            const allBrands = @json($brands);
-            
-            brandSearch.addEventListener('input', function() {
-                clearTimeout(brandSearchTimeout);
-                const search = this.value.toLowerCase().trim();
+            $(document).ready(function() {
+                // Brand search (client-side)
+                let brandSearchTimeout;
+                const $brandSearch = $('#brand_search');
+                const $brandId = $('#brand_id');
+                const $brandDropdown = $('#brand_dropdown');
+                const allBrands = @json($brands);
                 
-                brandSearchTimeout = setTimeout(() => {
-                    if (search.length === 0) {
-                        brandDropdown.style.display = 'block';
-                        showAllBrands();
-                    } else {
-                        const filtered = allBrands.filter(brand => 
-                            brand.name.toLowerCase().includes(search)
-                        );
-                        
-                        if (filtered.length === 0) {
-                            brandDropdown.innerHTML = '<div class="dropdown-item-text text-muted">No brands found</div>';
+                function showAllBrands() {
+                    let html = '';
+                    $.each(allBrands, function(index, brand) {
+                        html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '">' + brand.name + '</a>';
+                    });
+                    $brandDropdown.html(html);
+                }
+                
+                $brandSearch.on('input', function() {
+                    clearTimeout(brandSearchTimeout);
+                    const search = $(this).val().toLowerCase().trim();
+                    
+                    brandSearchTimeout = setTimeout(function() {
+                        if (search.length === 0) {
+                            showAllBrands();
+                            $brandDropdown.show();
                         } else {
-                            brandDropdown.innerHTML = filtered.map(brand => 
-                                `<a class="dropdown-item brand-option" href="#" data-id="${brand.id}">
-                                    ${brand.name}
-                                </a>`
-                            ).join('');
+                            const filtered = allBrands.filter(function(brand) {
+                                return brand.name.toLowerCase().includes(search);
+                            });
+                            
+                            if (filtered.length === 0) {
+                                $brandDropdown.html('<div class="dropdown-item-text text-muted">No brands found</div>');
+                            } else {
+                                let html = '';
+                                $.each(filtered, function(index, brand) {
+                                    html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '">' + brand.name + '</a>';
+                                });
+                                $brandDropdown.html(html);
+                            }
+                            $brandDropdown.show();
                         }
-                        brandDropdown.style.display = 'block';
-                    }
-                }, 300);
-            });
-            
-            function showAllBrands() {
-                brandDropdown.innerHTML = allBrands.map(brand => 
-                    `<a class="dropdown-item brand-option" href="#" data-id="${brand.id}">
-                        ${brand.name}
-                    </a>`
-                ).join('');
-            }
-            
-            // Handle brand selection
-            document.addEventListener('click', function(e) {
-                if (e.target.closest('.brand-option')) {
+                    }, 300);
+                });
+                
+                // Handle brand selection
+                $(document).on('click', '.brand-option', function(e) {
                     e.preventDefault();
-                    const option = e.target.closest('.brand-option');
-                    brandId.value = option.dataset.id;
-                    brandSearch.value = allBrands.find(b => b.id == option.dataset.id).name;
-                    brandDropdown.style.display = 'none';
-                } else if (!e.target.closest('#brand_search') && !e.target.closest('#brand_dropdown')) {
-                    brandDropdown.style.display = 'none';
-                }
-            });
-            
-            // Show brand dropdown on focus
-            brandSearch.addEventListener('focus', function() {
-                if (this.value.trim() === '') {
-                    showAllBrands();
-                    brandDropdown.style.display = 'block';
-                }
-            });
-            
-            // Form submit loading
-            document.getElementById('inventoryForm').addEventListener('submit', function() {
-                const btn = document.getElementById('submitBtn');
-                btn.disabled = true;
-                btn.querySelector('.spinner-border').classList.remove('d-none');
-                btn.querySelector('.btn-text').textContent = 'Saving...';
+                    const $option = $(this);
+                    const brandId = $option.data('id');
+                    const brand = allBrands.find(function(b) { return b.id == brandId; });
+                    
+                    $brandId.val(brandId);
+                    $brandSearch.val(brand.name);
+                    $brandDropdown.hide();
+                });
+                
+                $(document).on('click', function(e) {
+                    if (!$(e.target).closest('#brand_search, #brand_dropdown').length) {
+                        $brandDropdown.hide();
+                    }
+                });
+                
+                // Show brand dropdown on focus
+                $brandSearch.on('focus', function() {
+                    if ($(this).val().trim() === '') {
+                        showAllBrands();
+                        $brandDropdown.show();
+                    }
+                });
+                
+                // Form submit loading
+                $('#inventoryForm').on('submit', function() {
+                    const $btn = $('#submitBtn');
+                    $btn.prop('disabled', true);
+                    $btn.find('.spinner-border').removeClass('d-none');
+                    $btn.find('.btn-text').text('Saving...');
+                });
             });
         </script>
         

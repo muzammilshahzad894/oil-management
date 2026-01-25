@@ -268,43 +268,45 @@
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
     <script>
-        // Toggle password visibility
-        document.getElementById('togglePassword').addEventListener('click', function() {
-            const passwordField = document.getElementById('password');
-            const toggleIcon = this.querySelector('i');
-            
-            if (passwordField.type === 'password') {
-                passwordField.type = 'text';
-                toggleIcon.classList.remove('fa-eye');
-                toggleIcon.classList.add('fa-eye-slash');
-            } else {
-                passwordField.type = 'password';
-                toggleIcon.classList.remove('fa-eye-slash');
-                toggleIcon.classList.add('fa-eye');
-            }
-        });
-        
-        // Auto-hide alerts after 5 seconds
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(function(alert) {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
+        $(document).ready(function() {
+            // Toggle password visibility
+            $('#togglePassword').on('click', function() {
+                const $passwordField = $('#password');
+                const $toggleIcon = $(this).find('i');
+                
+                if ($passwordField.attr('type') === 'password') {
+                    $passwordField.attr('type', 'text');
+                    $toggleIcon.removeClass('fa-eye').addClass('fa-eye-slash');
+                } else {
+                    $passwordField.attr('type', 'password');
+                    $toggleIcon.removeClass('fa-eye-slash').addClass('fa-eye');
+                }
             });
-        }, 5000);
-        
-        // Login form submit loading
-        document.getElementById('loginForm').addEventListener('submit', function() {
-            const btn = document.getElementById('loginBtn');
-            const spinner = document.getElementById('loginSpinner');
-            const icon = document.getElementById('loginIcon');
-            const text = document.getElementById('loginText');
             
-            btn.disabled = true;
-            spinner.classList.remove('d-none');
-            icon.classList.add('d-none');
-            text.textContent = 'Signing in...';
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').each(function() {
+                    const bsAlert = new bootstrap.Alert(this);
+                    bsAlert.close();
+                });
+            }, 5000);
+            
+            // Login form submit loading
+            $('#loginForm').on('submit', function() {
+                const $btn = $('#loginBtn');
+                const $spinner = $('#loginSpinner');
+                const $icon = $('#loginIcon');
+                const $text = $('#loginText');
+                
+                $btn.prop('disabled', true);
+                $spinner.removeClass('d-none');
+                $icon.addClass('d-none');
+                $text.text('Signing in...');
+            });
         });
     </script>
 </body>

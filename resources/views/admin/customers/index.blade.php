@@ -30,43 +30,46 @@
 @section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    let searchTimeout;
-    const searchInput = document.getElementById('customerSearch');
-    const tableContainer = document.getElementById('tableContainer');
-    
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        const search = this.value.trim();
+    $(document).ready(function() {
+        let searchTimeout;
+        const $searchInput = $('#customerSearch');
+        const $tableContainer = $('#tableContainer');
         
-        searchTimeout = setTimeout(() => {
-            if (search.length === 0) {
-                window.location.href = '{{ route("admin.customers.index") }}';
-                return;
-            }
+        $searchInput.on('input', function() {
+            clearTimeout(searchTimeout);
+            const search = $(this).val().trim();
             
-            // Show loading
-            tableContainer.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Searching...</p></div>';
-            
-            fetch('{{ route("admin.customers.index") }}?search=' + encodeURIComponent(search))
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    const newTable = doc.getElementById('tableContainer');
-                    if (newTable) {
-                        tableContainer.innerHTML = newTable.innerHTML;
+            searchTimeout = setTimeout(function() {
+                if (search.length === 0) {
+                    window.location.href = '{{ route("admin.customers.index") }}';
+                    return;
+                }
+                
+                $tableContainer.html('<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Searching...</p></div>');
+                
+                $.ajax({
+                    url: '{{ route("admin.customers.index") }}',
+                    method: 'GET',
+                    data: { search: search },
+                    success: function(html) {
+                        const $html = $(html);
+                        const $newTable = $html.find('#tableContainer');
+                        if ($newTable.length) {
+                            $tableContainer.html($newTable.html());
+                        }
+                    },
+                    error: function() {
+                        $tableContainer.html('<div class="alert alert-danger">Error loading results</div>');
                     }
-                })
-                .catch(error => {
-                    tableContainer.innerHTML = '<div class="alert alert-danger">Error loading results</div>';
                 });
-        }, 500);
+            }, 500);
+        });
     });
     
     function confirmDelete(id, name) {
         Swal.fire({
             title: 'Are you sure?',
-            html: `<p>You want to delete customer <strong>${name}</strong>?</p><p class="text-danger"><small>This action cannot be undone.</small></p>`,
+            html: '<p>You want to delete customer <strong>' + name + '</strong>?</p><p class="text-danger"><small>This action cannot be undone.</small></p>',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -75,7 +78,7 @@
             cancelButtonText: 'Cancel'
         }).then((result) => {
             if (result.isConfirmed) {
-                document.getElementById('delete-form-' + id).submit();
+                $('#delete-form-' + id).submit();
             }
         });
     }
