@@ -54,7 +54,7 @@
                                 <td>
                                     {{ $sale->customer->name }}
                                     @if($sale->customer->trashed())
-                                        <span class="badge bg-danger ms-1" title="Deleted customer">
+                                        <span class="badge bg-danger ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="This customer has been deleted">
                                             <i class="fas fa-trash"></i>
                                         </span>
                                     @endif
@@ -62,7 +62,7 @@
                                 <td>
                                     {{ $sale->brand->name }}
                                     @if($sale->brand->trashed())
-                                        <span class="badge bg-danger ms-1" title="Deleted brand">
+                                        <span class="badge bg-danger ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="This brand has been deleted">
                                             <i class="fas fa-trash"></i>
                                         </span>
                                     @endif
@@ -71,19 +71,19 @@
                                 <td>{{ number_format($sale->price, 0) }}</td>
                                 <td>
                                     @if($sale->is_paid)
-                                        <span class="badge bg-success">Paid</span>
+                                        <span class="badge bg-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Payment completed">Paid</span>
                                     @else
-                                        <span class="badge bg-danger">Unpaid</span>
+                                        <span class="badge bg-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Payment pending">Unpaid</span>
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('admin.sales.show', $sale->id) }}" class="btn btn-sm btn-info" title="View">
+                                    <a href="{{ route('admin.sales.show', $sale->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" data-bs-placement="top" title="View Sale Details">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{{ route('admin.sales.edit', $sale->id) }}" class="btn btn-sm btn-warning" title="Edit">
+                                    <a href="{{ route('admin.sales.edit', $sale->id) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Sale">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-danger" title="Delete" onclick="confirmDelete({{ $sale->id }}, '{{ $sale->customer->name }}', '{{ $sale->brand->name }}')">
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete Sale" onclick="confirmDelete({{ $sale->id }}, '{{ $sale->customer->name }}', '{{ $sale->brand->name }}')">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                     <form id="delete-form-{{ $sale->id }}" action="{{ route('admin.sales.destroy', $sale->id) }}" method="POST" style="display: none;">

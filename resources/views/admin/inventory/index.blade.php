@@ -85,6 +85,10 @@
                         const $newTable = $html.find('#tableContainer');
                         if ($newTable.length) {
                             $tableContainer.html($newTable.html());
+                            // Reinitialize tooltips for new content
+                            $tableContainer.find('[data-bs-toggle="tooltip"]').each(function() {
+                                new bootstrap.Tooltip(this);
+                            });
                         }
                     },
                     error: function() {

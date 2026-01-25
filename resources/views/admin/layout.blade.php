@@ -904,6 +904,12 @@
     
     <script>
         $(document).ready(function() {
+            // Initialize Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
             // Mobile menu toggle
             $('#mobileMenuBtn').on('click', function() {
                 $('#sidebar, #sidebarOverlay').toggleClass('show');
@@ -932,6 +938,15 @@
                         $btnText.text($btnText.data('loading-text') || 'Saving...');
                     }
                 }
+            });
+            
+            // Reinitialize tooltips after AJAX content updates
+            $(document).on('DOMSubtreeModified', function() {
+                $('[data-bs-toggle="tooltip"]').each(function() {
+                    if (!$(this).attr('data-bs-original-title')) {
+                        new bootstrap.Tooltip(this);
+                    }
+                });
             });
         });
     </script>

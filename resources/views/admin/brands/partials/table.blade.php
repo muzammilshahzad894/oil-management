@@ -16,21 +16,23 @@
                         <td>{{ Str::limit($brand->description, 50) ?? 'N/A' }}</td>
                         <td>
                             @if($brand->inventory)
-                                <span class="badge {{ $brand->inventory->quantity < 10 ? 'bg-danger' : 'bg-success' }}">
+                                <span class="badge {{ $brand->inventory->quantity < 10 ? 'bg-danger' : 'bg-success' }}" data-bs-toggle="tooltip" data-bs-placement="top" title="Stock Level: {{ $brand->inventory->quantity }} units">
                                     {{ $brand->inventory->quantity }}
                                 </span>
                             @else
-                                <span class="badge bg-secondary">No Stock</span>
+                                <span class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="No inventory record found">
+                                    No Stock
+                                </span>
                             @endif
                         </td>
                         <td>
-                            <a href="{{ route('admin.brands.show', $brand->id) }}" class="btn btn-sm btn-info" title="View">
+                            <a href="{{ route('admin.brands.show', $brand->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" data-bs-placement="top" title="View Brand Details">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="{{ route('admin.brands.edit', $brand->id) }}" class="btn btn-sm btn-warning" title="Edit">
+                            <a href="{{ route('admin.brands.edit', $brand->id) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Brand">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <button type="button" class="btn btn-sm btn-danger" title="Delete" onclick="confirmDelete({{ $brand->id }}, '{{ $brand->name }}')">
+                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete Brand" onclick="confirmDelete({{ $brand->id }}, '{{ $brand->name }}')">
                                 <i class="fas fa-trash"></i>
                             </button>
                             <form id="delete-form-{{ $brand->id }}" action="{{ route('admin.brands.destroy', $brand->id) }}" method="POST" style="display: none;">
