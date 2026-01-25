@@ -1,7 +1,7 @@
 <div class="row">
     <div class="col-md-12 mb-3">
         <label for="brand_search" class="form-label">Brand <span class="text-danger">*</span></label>
-        <div class="position-relative">
+        <div class="position-relative w-100 customer-dropdown-wrapper">
             <input type="text" 
                    class="form-control @error('brand_id') is-invalid @enderror" 
                    id="brand_search" 

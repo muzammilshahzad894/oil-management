@@ -165,13 +165,26 @@
 
 @section('styles')
 <style>
-    .dropdown-menu {
+    .customer-dropdown-wrapper {
+        position: relative;
+    }
+
+    #customer_dropdown {
         position: absolute;
         top: 100%;
         left: 0;
-        z-index: 1000;
-        margin-top: 0.25rem;
+        width: 100%;
+        max-height: 250px;
+        overflow-y: auto;
+        z-index: 1055; /* Bootstrap modal safe */
     }
+
+    .card,
+    .card-body,
+    .row {
+        overflow: visible !important;
+    }
+
     
     .dropdown-item {
         cursor: pointer;

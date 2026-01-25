@@ -1,7 +1,8 @@
 <div class="row">
     <div class="col-md-6 mb-3">
         <label for="customer_search" class="form-label">Customer <span class="text-danger">*</span></label>
-        <div class="position-relative">
+        <div class="position-relative w-100 customer-dropdown-wrapper">
+
             <input type="text" 
                    class="form-control @error('customer_id') is-invalid @enderror" 
                    id="customer_search" 
