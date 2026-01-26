@@ -47,6 +47,7 @@ class SaleController extends Controller
             ->orWhere('phone', 'like', '%' . $search . '%')
             ->orWhere('email', 'like', '%' . $search . '%')
             ->limit(10)
+            ->withTrashed()
             ->get(['id', 'name', 'phone', 'email']);
         
         return response()->json($customers);

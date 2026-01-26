@@ -54,16 +54,16 @@
                                 <td>
                                     {{ $sale->customer->name }}
                                     @if($sale->customer->trashed())
-                                        <span class="badge bg-danger ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="This customer has been deleted">
-                                            <i class="fas fa-trash"></i>
+                                        <span class="deleted-item-badge" data-bs-toggle="tooltip" data-bs-placement="top" title="This customer has been deleted">
+                                            <i class="fas fa-circle-xmark"></i>
                                         </span>
                                     @endif
                                 </td>
                                 <td>
                                     {{ $sale->brand->name }}
                                     @if($sale->brand->trashed())
-                                        <span class="badge bg-danger ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="This brand has been deleted">
-                                            <i class="fas fa-trash"></i>
+                                        <span class="deleted-item-badge" data-bs-toggle="tooltip" data-bs-placement="top" title="This brand has been deleted">
+                                            <i class="fas fa-circle-xmark"></i>
                                         </span>
                                     @endif
                                 </td>
@@ -106,6 +106,15 @@
         @endif
     </div>
 </div>
+@endsection
+
+@section('styles')
+<style>
+    .deleted-item-badge {
+        padding: 0.3rem 0.3rem !important;
+        color: red;
+    }
+</style>
 @endsection
 
 @section('scripts')

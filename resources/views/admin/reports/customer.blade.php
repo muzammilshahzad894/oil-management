@@ -88,16 +88,16 @@
                                 <td>
                                     {{ $sale->customer->name }}
                                     @if($sale->customer->trashed())
-                                        <span class="badge bg-danger ms-1" title="Deleted customer">
-                                            <i class="fas fa-trash"></i>
+                                        <span class="deleted-item-badge" data-bs-toggle="tooltip" data-bs-placement="top" title="This customer has been deleted">
+                                            <i class="fas fa-circle-xmark"></i>
                                         </span>
                                     @endif
                                 </td>
                                 <td>
                                     {{ $sale->brand->name }}
                                     @if($sale->brand->trashed())
-                                        <span class="badge bg-danger ms-1" title="Deleted brand">
-                                            <i class="fas fa-trash"></i>
+                                        <span class="deleted-item-badge" data-bs-toggle="tooltip" data-bs-placement="top" title="This brand has been deleted">
+                                            <i class="fas fa-circle-xmark"></i>
                                         </span>
                                     @endif
                                 </td>
@@ -115,14 +115,14 @@
                     </tbody>
                     <tfoot class="table-light">
                         <tr>
+                            <th></th>
                             <th colspan="3" class="text-end">Total Paid:</th>
-                            <th>{{ $allSales->where('is_paid', true)->sum('quantity') }}</th>
                             <th>{{ number_format($allSales->where('is_paid', true)->sum('price'), 0) }}</th>
                             <th>{{ $allSales->where('is_paid', true)->count() }} sales</th>
                         </tr>
                         <tr>
+                            <th></th>
                             <th colspan="3" class="text-end">Total Unpaid:</th>
-                            <th>{{ $allSales->where('is_paid', false)->sum('quantity') }}</th>
                             <th>{{ number_format($allSales->where('is_paid', false)->sum('price'), 0) }}</th>
                             <th>{{ $allSales->where('is_paid', false)->count() }} sales</th>
                         </tr>
@@ -245,7 +245,6 @@
     .row {
         overflow: visible !important;
     }
-
     
     .dropdown-item {
         cursor: pointer;
@@ -262,6 +261,11 @@
     
     .position-relative {
         z-index: 1;
+    }
+
+    .deleted-item-badge {
+        padding: 0.3rem 0.3rem !important;
+        color: red;
     }
 </style>
 @endsection

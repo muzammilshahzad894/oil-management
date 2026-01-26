@@ -14,7 +14,11 @@ class InventoryController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Inventory::with('brand');
+        $query = Inventory::query()
+            ->whereHas('brand', function ($q) {
+                $q->whereNull('deleted_at'); // only non-deleted brands
+            })
+            ->with('brand');
         
         if ($request->has('search') && $request->search) {
             $query->whereHas('brand', function($q) use ($request) {
