@@ -10,6 +10,14 @@ use App\Http\Controllers\admin\SaleController;
 use App\Http\Controllers\admin\ProfileController;
 use App\Http\Controllers\admin\ReportController;
 
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('admin.dashboard');
+    } else {
+        return redirect()->route('admin.login');
+    }
+});
+
 // check if user is already logged in then redirect to dashboard
 Route::middleware(['guest'])->group(function () {
     Route::match(['get', 'post'], '/admin/login', [AdminLoginController::class, 'login'])->name('admin.login');
