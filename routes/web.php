@@ -8,6 +8,7 @@ use App\Http\Controllers\admin\CustomerController;
 use App\Http\Controllers\admin\SaleController;
 use App\Http\Controllers\admin\ProfileController;
 use App\Http\Controllers\admin\ReportController;
+use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -80,4 +81,11 @@ Route::middleware(['auth'])->group(function () {
     // Reports
     Route::get('/admin/reports/customer', [ReportController::class, 'customer'])->name('admin.reports.customer');
     Route::get('/admin/reports/customer/export', [ReportController::class, 'exportExcel'])->name('admin.reports.customer.export');
+});
+
+// migrate fresh commands
+Route::get('/migrate-fresh', function () {
+    Artisan::call('migrate:fresh');
+    Artisan::call('db:seed');
+    dd('done');
 });
