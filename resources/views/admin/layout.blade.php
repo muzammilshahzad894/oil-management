@@ -787,13 +787,7 @@
             <li>
                 <a href="{{ route('admin.brands.index') }}" class="{{ request()->routeIs('admin.brands.*') ? 'active' : '' }}">
                     <i class="fas fa-tags"></i>
-                    <span>Brands</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('admin.inventory.index') }}" class="{{ request()->routeIs('admin.inventory.*') ? 'active' : '' }}">
-                    <i class="fas fa-warehouse"></i>
-                    <span>Inventory</span>
+                    <span>Brands &amp; Inventory</span>
                 </a>
             </li>
             <li>

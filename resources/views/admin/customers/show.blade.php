@@ -32,7 +32,7 @@
         <i class="fas fa-history me-2"></i>Purchase History
     </div>
     <div class="card-body">
-        @if($customer->sales->count() > 0)
+        @if($sales->count() > 0)
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -45,17 +45,20 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($customer->sales as $sale)
+                        @foreach($sales as $sale)
                             <tr>
                                 <td>{{ $sale->sale_date->format('M d, Y') }}</td>
                                 <td>{{ $sale->brand->name }}</td>
                                 <td><span class="badge bg-primary">{{ $sale->quantity }}</span></td>
-                                <td>{{ $sale->price ? '$' . number_format($sale->price, 2) : 'N/A' }}</td>
+                                <td>{{ $sale->price ?? 'N/A' }}</td>
                                 <td>{{ $sale->notes ?? '-' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+            <div class="mt-4">
+                {{ $sales->links() }}
             </div>
         @else
             <p class="text-muted text-center py-4">No purchase history found for this customer.</p>

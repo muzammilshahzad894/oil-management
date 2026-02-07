@@ -13,7 +13,7 @@ class BrandController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Brand::with('inventory');
+        $query = Brand::query();
         
         if ($request->has('search') && $request->search) {
             $query->where('name', 'like', '%' . $request->search . '%')
@@ -40,9 +40,10 @@ class BrandController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'quantity' => 'nullable|integer|min:0',
         ]);
 
-        Brand::create($request->all());
+        Brand::create($request->only(['name', 'description', 'quantity']));
 
         return redirect()->route('admin.brands.index')
             ->with('success', 'Brand created successfully.');
@@ -53,8 +54,9 @@ class BrandController extends Controller
      */
     public function show(string $id)
     {
-        $brand = Brand::with(['inventory', 'sales.customer'])->findOrFail($id);
-        return view('admin.brands.show', compact('brand'));
+        $brand = Brand::findOrFail($id);
+        $sales = $brand->sales()->with('customer')->orderBy('sale_date', 'desc')->orderBy('created_at', 'desc')->paginate(15);
+        return view('admin.brands.show', compact('brand', 'sales'));
     }
 
     /**
@@ -74,10 +76,11 @@ class BrandController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'quantity' => 'nullable|integer|min:0',
         ]);
 
         $brand = Brand::findOrFail($id);
-        $brand->update($request->all());
+        $brand->update($request->only(['name', 'description', 'quantity']));
 
         return redirect()->route('admin.brands.index')
             ->with('success', 'Brand updated successfully.');

@@ -99,9 +99,9 @@
         function showAllBrands() {
             let html = '';
             $.each(allBrands, function(index, brand) {
-                const stock = brand.inventory ? brand.inventory.quantity : 0;
+                const stock = brand.quantity ?? 0;
                 html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '" data-stock="' + stock + '">' +
-                    brand.name + (brand.inventory ? ' (Stock: ' + brand.inventory.quantity + ')' : ' (No Stock)') +
+                    brand.name + ' (Stock: ' + stock + ')' +
                     '</a>';
             });
             $brandDropdown.html(html);
@@ -125,9 +125,9 @@
                     } else {
                         let html = '';
                         $.each(filtered, function(index, brand) {
-                            const stock = brand.inventory ? brand.inventory.quantity : 0;
+                            const stock = brand.quantity ?? 0;
                             html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '" data-stock="' + stock + '">' +
-                                brand.name + (brand.inventory ? ' (Stock: ' + brand.inventory.quantity + ')' : ' (No Stock)') +
+                                brand.name + ' (Stock: ' + stock + ')' +
                                 '</a>';
                         });
                         $brandDropdown.html(html);
@@ -148,12 +148,12 @@
             $brandSearch.val(brand.name);
             $brandDropdown.hide();
             
-            // Update stock info
+            // Update stock info - show in visible style
             const stock = $option.data('stock');
             const $stockInfo = $('#stock-info');
             if (stock !== null && stock !== '') {
-                $stockInfo.text('Available stock: ' + stock);
-                $stockInfo.removeClass('text-danger text-success').addClass(parseInt(stock) < 10 ? 'text-danger' : 'text-success');
+                $stockInfo.html('<i class="fas fa-box me-2"></i>Available stock: <span class="stock-number">' + stock + '</span>').show();
+                $stockInfo.removeClass('stock-info-low stock-info-ok').addClass(parseInt(stock) < 10 ? 'stock-info-low' : 'stock-info-ok');
             }
         });
         
@@ -240,6 +240,25 @@
     
     .position-relative {
         z-index: 1;
+    }
+
+    /* Available stock - visible and clear */
+    .stock-info-display {
+        font-size: 1rem;
+        min-height: 2.5rem;
+    }
+    .stock-info-display .stock-number {
+        font-size: 1.15rem;
+    }
+    .stock-info-ok {
+        background-color: #d1e7dd;
+        color: #0f5132;
+        border: 1px solid #badbcc;
+    }
+    .stock-info-low {
+        background-color: #f8d7da;
+        color: #842029;
+        border: 1px solid #f5c2c7;
     }
 </style>
 @endsection

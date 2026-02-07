@@ -143,8 +143,8 @@ class ReportController extends Controller
             fputcsv($file, []);
             
             // Totals
-            fputcsv($file, ['Total Paid', '', '', $qtyPaid, number_format($totalPaid, 2), $sales->where('is_paid', true)->count() . ' sales']);
-            fputcsv($file, ['Total Unpaid', '', '', $qtyUnpaid, number_format($totalUnpaid, 2), $sales->where('is_paid', false)->count() . ' sales']);
+            fputcsv($file, ['Total Paid', '', '', $qtyPaid, $totalPaid, $sales->where('is_paid', true)->count() . ' sales']);
+            fputcsv($file, ['Total Unpaid', '', '', $qtyUnpaid, $totalUnpaid, $sales->where('is_paid', false)->count() . ' sales']);
             
             fclose($file);
         };

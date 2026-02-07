@@ -105,7 +105,7 @@
                             <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
                                 <div>
                                     <i class="fas fa-exclamation-circle text-danger me-2"></i>
-                                    <strong>{{ $item->brand->name }}</strong>
+                                    <strong>{{ $item->name }}</strong>
                                 </div>
                                 <span class="badge bg-danger">{{ $item->quantity }}</span>
                             </div>

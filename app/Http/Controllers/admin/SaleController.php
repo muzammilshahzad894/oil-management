@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Sale;
 use App\Models\Customer;
 use App\Models\Brand;
-use App\Models\Inventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -59,7 +58,7 @@ class SaleController extends Controller
     public function create(Request $request)
     {
         $customers = Customer::orderBy('name')->get();
-        $brands = Brand::with('inventory')->get();
+        $brands = Brand::all();
         $selectedCustomerId = $request->input('customer_id');
         return view('admin.sales.create', compact('customers', 'brands', 'selectedCustomerId'));
     }
@@ -81,26 +80,24 @@ class SaleController extends Controller
 
         DB::beginTransaction();
         try {
-            // Check if inventory exists and has enough stock
-            $inventory = Inventory::where('brand_id', $request->brand_id)->first();
-            
-            if (!$inventory) {
+            // Check brand has enough stock
+            $brand = Brand::find($request->brand_id);
+            if (!$brand) {
                 return redirect()->back()
                     ->withInput()
-                    ->with('error', 'Inventory not found for this brand. Please add inventory first.');
+                    ->with('error', 'Brand not found.');
             }
-            
-            if ($inventory->quantity < $request->quantity) {
+            if (($brand->quantity ?? 0) < $request->quantity) {
                 return redirect()->back()
                     ->withInput()
-                    ->with('error', 'Insufficient stock. Available: ' . $inventory->quantity);
+                    ->with('error', 'Insufficient stock. Available: ' . ($brand->quantity ?? 0));
             }
             
             // Create sale
             $sale = Sale::create($request->all());
             
-            // Decrease inventory
-            $inventory->removeStock($request->quantity);
+            // Decrease brand stock
+            $brand->removeStock($request->quantity);
             
             DB::commit();
             
@@ -158,7 +155,7 @@ class SaleController extends Controller
     public function edit(string $id)
     {
         $sale = Sale::findOrFail($id);
-        $brands = Brand::with('inventory')->get();
+        $brands = Brand::all();
         return view('admin.sales.edit', compact('sale', 'brands'));
     }
 
@@ -183,39 +180,35 @@ class SaleController extends Controller
         
         DB::beginTransaction();
         try {
-            // If brand or quantity changed, adjust inventory
+            // If brand or quantity changed, adjust stock
             if ($oldBrandId != $request->brand_id || $oldQuantity != $request->quantity) {
-                // Restore old inventory
-                $oldInventory = Inventory::where('brand_id', $oldBrandId)->first();
-                if ($oldInventory) {
-                    $oldInventory->addStock($oldQuantity);
+                $oldBrand = Brand::find($oldBrandId);
+                if ($oldBrand) {
+                    $oldBrand->addStock($oldQuantity);
                 }
                 
-                // Check new inventory
-                $newInventory = Inventory::where('brand_id', $request->brand_id)->first();
-                if (!$newInventory) {
+                $newBrand = Brand::find($request->brand_id);
+                if (!$newBrand) {
                     return redirect()->back()
                         ->withInput()
-                        ->with('error', 'Inventory not found for this brand.');
+                        ->with('error', 'Brand not found.');
                 }
                 
-                $availableStock = $newInventory->quantity + ($oldBrandId == $request->brand_id ? $oldQuantity : 0);
+                $availableStock = $newBrand->quantity + ($oldBrandId == $request->brand_id ? $oldQuantity : 0);
                 if ($availableStock < $request->quantity) {
-                    // Restore old inventory if we're reverting
-                    if ($oldInventory && $oldBrandId != $request->brand_id) {
-                        $oldInventory->removeStock($oldQuantity);
+                    if ($oldBrand && $oldBrandId != $request->brand_id) {
+                        $oldBrand->removeStock($oldQuantity);
                     }
                     return redirect()->back()
                         ->withInput()
                         ->with('error', 'Insufficient stock. Available: ' . $availableStock);
                 }
                 
-                // Update new inventory
                 if ($oldBrandId == $request->brand_id) {
-                    $newInventory->quantity = $availableStock - $request->quantity;
-                    $newInventory->save();
+                    $newBrand->quantity = $availableStock - $request->quantity;
+                    $newBrand->save();
                 } else {
-                    $newInventory->removeStock($request->quantity);
+                    $newBrand->removeStock($request->quantity);
                 }
             }
             
@@ -242,10 +235,10 @@ class SaleController extends Controller
         
         DB::beginTransaction();
         try {
-            // Restore inventory
-            $inventory = Inventory::where('brand_id', $sale->brand_id)->first();
-            if ($inventory) {
-                $inventory->addStock($sale->quantity);
+            // Restore brand stock
+            $brand = Brand::find($sale->brand_id);
+            if ($brand) {
+                $brand->addStock($sale->quantity);
             }
             
             $sale->delete();

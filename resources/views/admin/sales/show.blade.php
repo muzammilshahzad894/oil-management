@@ -37,7 +37,7 @@
                 <p><strong>Quantity:</strong> {{ $sale->quantity }}</p>
             </div>
             <div class="col-md-6">
-                <p><strong>Price:</strong> {{ $sale->price ? number_format($sale->price, 0) : 'N/A' }}</p>
+                <p><strong>Price:</strong> {{ $sale->price ?? 'N/A' }}</p>
                 <p><strong>Sale Date:</strong> {{ $sale->sale_date->format('M d, Y') }}</p>
                 <p><strong>Notes:</strong> {{ $sale->notes ?? 'N/A' }}</p>
             </div>

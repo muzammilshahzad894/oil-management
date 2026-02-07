@@ -15,15 +15,9 @@
                         <td><strong>{{ $brand->name }}</strong></td>
                         <td>{{ Str::limit($brand->description, 50) ?? 'N/A' }}</td>
                         <td>
-                            @if($brand->inventory)
-                                <span class="badge {{ $brand->inventory->quantity < 10 ? 'bg-danger' : 'bg-success' }}" data-bs-toggle="tooltip" data-bs-placement="top" title="Stock Level: {{ $brand->inventory->quantity }} units">
-                                    {{ $brand->inventory->quantity }}
-                                </span>
-                            @else
-                                <span class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="No inventory record found">
-                                    No Stock
-                                </span>
-                            @endif
+                            <span class="badge {{ ($brand->quantity ?? 0) < 10 ? 'bg-danger' : 'bg-success' }}" data-bs-toggle="tooltip" data-bs-placement="top" title="Stock: {{ $brand->quantity ?? 0 }} units">
+                                {{ $brand->quantity ?? 0 }}
+                            </span>
                         </td>
                         <td>
                             <a href="{{ route('admin.brands.show', $brand->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" data-bs-placement="top" title="View Brand Details">

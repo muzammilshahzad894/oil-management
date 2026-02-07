@@ -68,7 +68,7 @@
                                     @endif
                                 </td>
                                 <td><span>{{ $sale->quantity }}</span></td>
-                                <td>{{ number_format($sale->price, 0) }}</td>
+                                <td>{{ $sale->price }}</td>
                                 <td>
                                     @if($sale->is_paid)
                                         <span class="badge bg-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Payment completed">Paid</span>

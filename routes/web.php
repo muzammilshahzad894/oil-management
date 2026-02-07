@@ -5,7 +5,6 @@ use App\Http\Controllers\admin\AdminLoginController;
 use App\Http\Controllers\admin\DashboardController;
 use App\Http\Controllers\admin\BrandController;
 use App\Http\Controllers\admin\CustomerController;
-use App\Http\Controllers\admin\InventoryController;
 use App\Http\Controllers\admin\SaleController;
 use App\Http\Controllers\admin\ProfileController;
 use App\Http\Controllers\admin\ReportController;
@@ -64,18 +63,6 @@ Route::middleware(['auth'])->group(function () {
         'destroy' => 'admin.customers.destroy',
     ]);
     Route::post('/admin/customers/search', [CustomerController::class, 'search'])->name('admin.customers.search');
-    
-    // Inventory
-    Route::resource('admin/inventory', InventoryController::class)->names([
-        'index' => 'admin.inventory.index',
-        'create' => 'admin.inventory.create',
-        'store' => 'admin.inventory.store',
-        'show' => 'admin.inventory.show',
-        'edit' => 'admin.inventory.edit',
-        'update' => 'admin.inventory.update',
-        'destroy' => 'admin.inventory.destroy',
-    ]);
-    Route::post('/admin/inventory/{id}/add-stock', [InventoryController::class, 'addStock'])->name('admin.inventory.add-stock');
     
     // Sales
     Route::get('/admin/sales/search-customers', [SaleController::class, 'searchCustomers'])->name('admin.sales.search-customers');

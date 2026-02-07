@@ -210,7 +210,7 @@
                     </div>
                 </div>
                 <div class="item-details">
-                    <div>{{ number_format($sale->price, 0) }}</div>
+                    <div>{{ $sale->price }}</div>
                 </div>
             </div>
         </div>
@@ -220,11 +220,11 @@
         <div class="total-section">
             <div class="total-row">
                 <span>Subtotal:</span>
-                <span>{{ number_format($sale->price, 0) }}</span>
+                <span>{{ $sale->price }}</span>
             </div>
             <div class="total-row grand">
                 <span>TOTAL:</span>
-                <span>{{ number_format($sale->price, 0) }}</span>
+                <span>{{ $sale->price }}</span>
             </div>
         </div>
         

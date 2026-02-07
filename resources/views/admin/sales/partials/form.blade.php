@@ -34,13 +34,8 @@
             <input type="hidden" id="brand_id" name="brand_id" value="{{ old('brand_id', $sale->brand_id ?? '') }}" required>
                     <div id="brand_dropdown" class="dropdown-menu w-100" style="display: none;">
                 @foreach($brands as $brand)
-                    <a class="dropdown-item brand-option" href="#" data-id="{{ $brand->id }}" data-stock="{{ $brand->inventory ? $brand->inventory->quantity : 0 }}">
-                        {{ $brand->name }} 
-                        @if($brand->inventory)
-                            (Stock: {{ $brand->inventory->quantity }})
-                        @else
-                            (No Stock)
-                        @endif
+                    <a class="dropdown-item brand-option" href="#" data-id="{{ $brand->id }}" data-stock="{{ $brand->quantity ?? 0 }}">
+                        {{ $brand->name }} (Stock: {{ $brand->quantity ?? 0 }})
                     </a>
                 @endforeach
             </div>
@@ -48,7 +43,7 @@
         @error('brand_id')
             <div class="invalid-feedback">{{ $message }}</div>
         @enderror
-        <small class="text-muted" id="stock-info"></small>
+        <div id="stock-info" class="stock-info-display mt-2 py-2 px-3 rounded fw-bold" style="display: none;"></div>
     </div>
 </div>
 <div class="row">

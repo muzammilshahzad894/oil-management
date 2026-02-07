@@ -102,7 +102,7 @@
                                     @endif
                                 </td>
                                 <td><span>{{ $sale->quantity }}</span></td>
-                                <td>{{ number_format($sale->price, 0) }}</td>
+                                <td>{{ $sale->price }}</td>
                                 <td>
                                     @if($sale->is_paid)
                                         <span class="badge bg-success">Paid</span>
@@ -117,13 +117,13 @@
                         <tr>
                             <th></th>
                             <th colspan="3" class="text-end">Total Paid:</th>
-                            <th>{{ number_format($allSales->where('is_paid', true)->sum('price'), 0) }}</th>
+                            <th>{{ $allSales->where('is_paid', true)->sum('price') }}</th>
                             <th>{{ $allSales->where('is_paid', true)->count() }} sales</th>
                         </tr>
                         <tr>
                             <th></th>
                             <th colspan="3" class="text-end">Total Unpaid:</th>
-                            <th>{{ number_format($allSales->where('is_paid', false)->sum('price'), 0) }}</th>
+                            <th>{{ $allSales->where('is_paid', false)->sum('price') }}</th>
                             <th>{{ $allSales->where('is_paid', false)->count() }} sales</th>
                         </tr>
                     </tfoot>

@@ -18,13 +18,9 @@
             </div>
             <div class="col-md-6">
                 <p><strong>Current Stock:</strong> 
-                    @if($brand->inventory)
-                        <span class="badge {{ $brand->inventory->quantity < 10 ? 'bg-danger' : 'bg-success' }}">
-                            {{ $brand->inventory->quantity }}
-                        </span>
-                    @else
-                        <span class="badge bg-secondary">No Stock</span>
-                    @endif
+                    <span class="badge {{ ($brand->quantity ?? 0) < 10 ? 'bg-danger' : 'bg-success' }}">
+                        {{ $brand->quantity ?? 0 }}
+                    </span>
                 </p>
                 <p><strong>Total Sales:</strong> <span class="badge bg-primary">{{ $brand->sales->count() }}</span></p>
             </div>
@@ -37,7 +33,7 @@
         <i class="fas fa-shopping-cart me-2"></i>Sales History
     </div>
     <div class="card-body">
-        @if($brand->sales->count() > 0)
+        @if($sales->count() > 0)
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -49,16 +45,19 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($brand->sales as $sale)
+                        @foreach($sales as $sale)
                             <tr>
                                 <td>{{ $sale->sale_date->format('M d, Y') }}</td>
                                 <td>{{ $sale->customer->name }}</td>
                                 <td><span class="badge bg-primary">{{ $sale->quantity }}</span></td>
-                                <td>{{ $sale->price ? '$' . number_format($sale->price, 2) : 'N/A' }}</td>
+                                <td>{{ $sale->price ?? 'N/A' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+            <div class="mt-4">
+                {{ $sales->links() }}
             </div>
         @else
             <p class="text-muted text-center py-4">No sales recorded for this brand.</p>
