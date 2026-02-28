@@ -3,10 +3,10 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\User;
 use App\Models\Brand;
 use App\Models\Customer;
 use App\Models\Sale;
+use App\Models\Payment;
 use Carbon\Carbon;
 
 class OilManagementSeeder extends Seeder
@@ -16,7 +16,7 @@ class OilManagementSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create Brands (with quantity / inventory)
+        // Create Brands (with quantity / inventory and purchase price for P&L)
         $brandsData = [
             ['name' => 'Castrol', 'description' => 'Premium engine oil'],
             ['name' => 'Mobil', 'description' => 'High performance motor oil'],
@@ -27,10 +27,12 @@ class OilManagementSeeder extends Seeder
 
         $createdBrands = [];
         foreach ($brandsData as $data) {
+            $costPrice = rand(20, 80) + (rand(0, 99) / 100);
             $createdBrands[] = Brand::create([
                 'name' => $data['name'],
                 'description' => $data['description'],
                 'quantity' => rand(50, 500),
+                'cost_price' => $costPrice,
             ]);
         }
 
@@ -52,9 +54,10 @@ class OilManagementSeeder extends Seeder
             ]);
         }
 
-        // Create Sales (decrease brand quantity)
+        // Create Sales (decrease brand quantity, set cost_at_sale for P&L)
         $startDate = Carbon::now()->subMonths(3);
         $endDate = Carbon::now();
+        $saleIds = [];
 
         for ($i = 0; $i < 150; $i++) {
             $customer = $customers[array_rand($customers)];
@@ -63,22 +66,48 @@ class OilManagementSeeder extends Seeder
             if ($brand->quantity > 0) {
                 $quantity = rand(1, min(20, $brand->quantity));
                 $price = rand(50, 500);
+                $costAtSale = $brand->cost_price !== null ? (float) $brand->cost_price : null;
                 $saleDate = Carbon::createFromTimestamp(
                     rand($startDate->timestamp, $endDate->timestamp)
                 );
 
-                Sale::create([
+                $sale = Sale::create([
                     'customer_id' => $customer->id,
                     'brand_id' => $brand->id,
                     'quantity' => $quantity,
                     'price' => $price,
+                    'cost_at_sale' => $costAtSale,
                     'sale_date' => $saleDate,
-                    'is_paid' => rand(0, 1) == 1,
+                    'is_paid' => false,
                     'notes' => rand(0, 1) == 1 ? 'Regular customer order' : null,
                 ]);
-
+                $saleIds[] = $sale;
                 $brand->removeStock($quantity);
             }
+        }
+
+        // Add payments for some sales (partial, full, overpayment)
+        foreach (array_slice($saleIds, 0, 60) as $index => $sale) {
+            $payType = $index % 3;
+            if ($payType === 0) {
+                Payment::create([
+                    'sale_id' => $sale->id,
+                    'amount' => $sale->price,
+                    'payment_date' => $sale->sale_date,
+                    'method' => 'cash',
+                    'notes' => 'Full payment',
+                ]);
+            } elseif ($payType === 1) {
+                $amt = round($sale->price * 0.5, 2);
+                Payment::create([
+                    'sale_id' => $sale->id,
+                    'amount' => $amt,
+                    'payment_date' => $sale->sale_date,
+                    'method' => 'cash',
+                    'notes' => 'Half payment',
+                ]);
+            }
+            $sale->refreshIsPaid();
         }
     }
 }

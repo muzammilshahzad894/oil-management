@@ -20,7 +20,9 @@ class BrandController extends Controller
                   ->orWhere('description', 'like', '%' . $request->search . '%');
         }
         
-        $brands = $query->orderBy('name')->paginate(15);
+        $brands = $query->withSum(['sales' => fn($q) => $q->withoutTrashed()], 'quantity')
+            ->orderBy('name')
+            ->paginate(15);
         return view('admin.brands.index', compact('brands'));
     }
 
@@ -37,13 +39,18 @@ class BrandController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'quantity' => 'nullable|integer|min:0',
-        ]);
+            'cost_price' => 'nullable|numeric|min:0',
+        ];
+        if ((int) ($request->input('quantity') ?? 0) > 0) {
+            $rules['cost_price'] = 'required|numeric|min:0';
+        }
+        $request->validate($rules);
 
-        Brand::create($request->only(['name', 'description', 'quantity']));
+        Brand::create($request->only(['name', 'description', 'quantity', 'cost_price']));
 
         return redirect()->route('admin.brands.index')
             ->with('success', 'Brand created successfully.');
@@ -73,14 +80,19 @@ class BrandController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'quantity' => 'nullable|integer|min:0',
-        ]);
+            'cost_price' => 'nullable|numeric|min:0',
+        ];
+        if ((int) ($request->input('quantity') ?? 0) > 0) {
+            $rules['cost_price'] = 'required|numeric|min:0';
+        }
+        $request->validate($rules);
 
         $brand = Brand::findOrFail($id);
-        $brand->update($request->only(['name', 'description', 'quantity']));
+        $brand->update($request->only(['name', 'description', 'quantity', 'cost_price']));
 
         return redirect()->route('admin.brands.index')
             ->with('success', 'Brand updated successfully.');

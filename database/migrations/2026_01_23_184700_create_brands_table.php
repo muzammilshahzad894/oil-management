@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->integer('quantity')->default(0);
+            $table->decimal('cost_price', 10, 2)->nullable()->comment('Purchase price per unit for P&L');
             $table->timestamps();
             $table->softDeletes();
         });

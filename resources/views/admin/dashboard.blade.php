@@ -4,25 +4,7 @@
 
 @section('content')
 <div class="row mb-4">
-    <div class="col-lg-3 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-users"></i>
-            </div>
-            <div class="stat-value">{{ $totalCustomers }}</div>
-            <div class="stat-label">Total Customers</div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-tags"></i>
-            </div>
-            <div class="stat-value">{{ $totalBrands }}</div>
-            <div class="stat-label">Total Brands</div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6 mb-4">
+    <div class="col-lg-4 col-md-6 mb-4">
         <div class="stat-card">
             <div class="stat-icon">
                 <i class="fas fa-shopping-cart"></i>
@@ -31,13 +13,23 @@
             <div class="stat-label">Total Sales</div>
         </div>
     </div>
-    <div class="col-lg-3 col-md-6 mb-4">
+    <div class="col-lg-4 col-md-6 mb-4">
         <div class="stat-card">
             <div class="stat-icon">
                 <i class="fas fa-warehouse"></i>
             </div>
             <div class="stat-value">{{ $totalInventory }}</div>
             <div class="stat-label">Total Inventory</div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-value {{ ($totalProfit ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">{{ format_amount($totalProfit ?? 0) }}</div>
+            <div class="stat-label">Actual Profit (P&L)</div>
+            <small class="text-muted">Received − Cost</small>
         </div>
     </div>
 </div>

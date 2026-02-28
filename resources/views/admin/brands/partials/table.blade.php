@@ -6,6 +6,8 @@
                     <th>Name</th>
                     <th>Description</th>
                     <th>Stock</th>
+                    <th>Sold</th>
+                    <th>Purchase price</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -15,20 +17,16 @@
                         <td><strong>{{ $brand->name }}</strong></td>
                         <td>{{ Str::limit($brand->description, 50) ?? 'N/A' }}</td>
                         <td>
-                            <span class="badge {{ ($brand->quantity ?? 0) < 10 ? 'bg-danger' : 'bg-success' }}" data-bs-toggle="tooltip" data-bs-placement="top" title="Stock: {{ $brand->quantity ?? 0 }} units">
+                            <span class="badge {{ ($brand->quantity ?? 0) < 10 ? 'bg-danger' : 'bg-success' }}">
                                 {{ $brand->quantity ?? 0 }}
                             </span>
                         </td>
+                        <td>{{ $brand->sales_sum_quantity ?? 0 }}</td>
+                        <td>{{ $brand->cost_price !== null ? format_amount($brand->cost_price) : '—' }}</td>
                         <td>
-                            <a href="{{ route('admin.brands.show', $brand->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" data-bs-placement="top" title="View Brand Details">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <a href="{{ route('admin.brands.edit', $brand->id) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Brand">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete Brand" onclick="confirmDelete({{ $brand->id }}, '{{ $brand->name }}')">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            <a href="{{ route('admin.brands.show', $brand->id) }}" class="btn btn-sm btn-info">View</a>
+                            <a href="{{ route('admin.brands.edit', $brand->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ $brand->id }}, '{{ addslashes($brand->name) }}')">Delete</button>
                             <form id="delete-form-{{ $brand->id }}" action="{{ route('admin.brands.destroy', $brand->id) }}" method="POST" style="display: none;">
                                 @csrf
                                 @method('DELETE')
@@ -39,8 +37,9 @@
             </tbody>
         </table>
     </div>
-    
-    <!-- Pagination -->
+    <div class="text-muted small mt-2">
+        Showing {{ $brands->firstItem() }} to {{ $brands->lastItem() }} of {{ $brands->total() }} records
+    </div>
     <div class="mt-4">
         {{ $brands->links() }}
     </div>

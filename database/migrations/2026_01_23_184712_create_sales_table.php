@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('brand_id')->constrained('brands')->onDelete('cascade');
             $table->integer('quantity');
             $table->decimal('price', 10, 2);
+            $table->decimal('cost_at_sale', 10, 2)->nullable()->comment('Cost per unit at sale time (for P&L tracking)');
             $table->date('sale_date');
             $table->boolean('is_paid')->default(false);
             $table->text('notes')->nullable();

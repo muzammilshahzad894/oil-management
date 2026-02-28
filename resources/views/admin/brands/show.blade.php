@@ -6,9 +6,7 @@
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="fas fa-tag me-2"></i>Brand Information</span>
-        <a href="{{ route('admin.brands.edit', $brand->id) }}" class="btn btn-sm btn-warning">
-            <i class="fas fa-edit me-2"></i>Edit
-        </a>
+        <a href="{{ route('admin.brands.edit', $brand->id) }}" class="btn btn-sm btn-warning">Edit</a>
     </div>
     <div class="card-body">
         <div class="row">
@@ -17,7 +15,10 @@
                 <p><strong>Description:</strong> {{ $brand->description ?? 'N/A' }}</p>
             </div>
             <div class="col-md-6">
-                <p><strong>Current Stock:</strong> 
+                @if($showPurchasePrice && $brand->cost_price !== null)
+                <p><strong>Purchase price:</strong> {{ format_amount($brand->cost_price) }}</p>
+                @endif
+                <p><strong>Current Stock:</strong>
                     <span class="badge {{ ($brand->quantity ?? 0) < 10 ? 'bg-danger' : 'bg-success' }}">
                         {{ $brand->quantity ?? 0 }}
                     </span>
@@ -42,6 +43,9 @@
                             <th>Customer</th>
                             <th>Quantity</th>
                             <th>Price</th>
+                            @if($showPurchasePrice)
+                            <th>Purchase price</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -51,10 +55,16 @@
                                 <td>{{ $sale->customer->name }}</td>
                                 <td><span class="badge bg-primary">{{ $sale->quantity }}</span></td>
                                 <td>{{ $sale->price ?? 'N/A' }}</td>
+                                @if($showPurchasePrice)
+                                <td>{{ $sale->cost_at_sale !== null ? format_amount($sale->cost_at_sale) : '—' }}</td>
+                                @endif
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+            <div class="text-muted small mt-2">
+                Showing {{ $sales->firstItem() }} to {{ $sales->lastItem() }} of {{ $sales->total() }} records
             </div>
             <div class="mt-4">
                 {{ $sales->links() }}

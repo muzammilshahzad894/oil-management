@@ -58,7 +58,7 @@ class CustomerController extends Controller
     {
         $customer = Customer::findOrFail($id);
         $totalQuantity = $customer->sales()->sum('quantity');
-        $sales = $customer->sales()->with('brand')->orderBy('sale_date', 'desc')->orderBy('created_at', 'desc')->paginate(15);
+        $sales = $customer->sales()->with(['brand' => fn($q) => $q->withTrashed()])->orderBy('sale_date', 'desc')->orderBy('created_at', 'desc')->paginate(15);
         return view('admin.customers.show', compact('customer', 'totalQuantity', 'sales'));
     }
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Sale;
 use App\Models\Customer;
 use App\Models\Brand;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -46,7 +47,6 @@ class SaleController extends Controller
             ->orWhere('phone', 'like', '%' . $search . '%')
             ->orWhere('email', 'like', '%' . $search . '%')
             ->limit(10)
-            ->withTrashed()
             ->get(['id', 'name', 'phone', 'email']);
         
         return response()->json($customers);
@@ -74,13 +74,14 @@ class SaleController extends Controller
             'quantity' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
             'sale_date' => 'required|date',
-            'is_paid' => 'nullable|boolean',
+            'initial_payment' => 'nullable|numeric|min:0',
+            'initial_payment_date' => 'nullable|date',
+            'initial_payment_method' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
         try {
-            // Check brand has enough stock
             $brand = Brand::find($request->brand_id);
             if (!$brand) {
                 return redirect()->back()
@@ -92,23 +93,41 @@ class SaleController extends Controller
                     ->withInput()
                     ->with('error', 'Insufficient stock. Available: ' . ($brand->quantity ?? 0));
             }
-            
-            // Create sale
-            $sale = Sale::create($request->all());
-            
-            // Decrease brand stock
+
+            $costAtSale = null;
+            if ($brand->cost_price !== null) {
+                $costAtSale = (float) $brand->cost_price;
+            }
+
+            $saleData = $request->only(['customer_id', 'brand_id', 'quantity', 'price', 'sale_date', 'notes']);
+            $saleData['cost_at_sale'] = $costAtSale;
+            $saleData['is_paid'] = false;
+
+            $sale = Sale::create($saleData);
             $brand->removeStock($request->quantity);
-            
+
+            $initialAmount = (float) ($request->input('initial_payment') ?? 0);
+            if ($initialAmount > 0) {
+                Payment::create([
+                    'sale_id' => $sale->id,
+                    'amount' => $initialAmount,
+                    'payment_date' => $request->input('initial_payment_date') ?: $request->sale_date,
+                    'method' => $request->input('initial_payment_method') ?: Payment::METHOD_CASH,
+                    'reference' => null,
+                    'notes' => 'Initial payment',
+                ]);
+                $sale->refreshIsPaid();
+            }
+
             DB::commit();
-            
-            // Check if save and print was clicked
+
             if ($request->input('action') === 'save_and_print') {
                 return redirect()->route('admin.sales.receipt', ['id' => $sale->id, 'autoprint' => 1])
-                    ->with('success', 'Sale recorded successfully and inventory updated.');
+                    ->with('success', 'Sale recorded successfully. You can add more payments from the sale details page.');
             }
-            
-            return redirect()->route('admin.sales.index')
-                ->with('success', 'Sale recorded successfully and inventory updated.');
+
+            return redirect()->route('admin.sales.show', $sale->id)
+                ->with('success', 'Sale created successfully. Add payments from this page or later.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -123,12 +142,9 @@ class SaleController extends Controller
     public function show(string $id)
     {
         $sale = Sale::with([
-            'customer' => function($q) {
-                $q->withTrashed();
-            },
-            'brand' => function($q) {
-                $q->withTrashed();
-            }
+            'customer' => fn($q) => $q->withTrashed(),
+            'brand' => fn($q) => $q->withTrashed(),
+            'payments',
         ])->findOrFail($id);
         return view('admin.sales.show', compact('sale'));
     }
@@ -139,12 +155,9 @@ class SaleController extends Controller
     public function receipt(string $id)
     {
         $sale = Sale::with([
-            'customer' => function($q) {
-                $q->withTrashed();
-            },
-            'brand' => function($q) {
-                $q->withTrashed();
-            }
+            'customer' => fn($q) => $q->withTrashed(),
+            'brand' => fn($q) => $q->withTrashed(),
+            'payments',
         ])->findOrFail($id);
         return view('admin.sales.receipt', compact('sale'));
     }
@@ -170,30 +183,28 @@ class SaleController extends Controller
             'quantity' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
             'sale_date' => 'required|date',
-            'is_paid' => 'nullable|boolean',
             'notes' => 'nullable|string',
         ]);
 
         $sale = Sale::findOrFail($id);
         $oldQuantity = $sale->quantity;
         $oldBrandId = $sale->brand_id;
-        
+
         DB::beginTransaction();
         try {
-            // If brand or quantity changed, adjust stock
             if ($oldBrandId != $request->brand_id || $oldQuantity != $request->quantity) {
                 $oldBrand = Brand::find($oldBrandId);
                 if ($oldBrand) {
                     $oldBrand->addStock($oldQuantity);
                 }
-                
+
                 $newBrand = Brand::find($request->brand_id);
                 if (!$newBrand) {
                     return redirect()->back()
                         ->withInput()
                         ->with('error', 'Brand not found.');
                 }
-                
+
                 $availableStock = $newBrand->quantity + ($oldBrandId == $request->brand_id ? $oldQuantity : 0);
                 if ($availableStock < $request->quantity) {
                     if ($oldBrand && $oldBrandId != $request->brand_id) {
@@ -203,7 +214,7 @@ class SaleController extends Controller
                         ->withInput()
                         ->with('error', 'Insufficient stock. Available: ' . $availableStock);
                 }
-                
+
                 if ($oldBrandId == $request->brand_id) {
                     $newBrand->quantity = $availableStock - $request->quantity;
                     $newBrand->save();
@@ -211,12 +222,17 @@ class SaleController extends Controller
                     $newBrand->removeStock($request->quantity);
                 }
             }
-            
-            $sale->update($request->all());
-            
+
+            $updateData = $request->only(['customer_id', 'brand_id', 'quantity', 'price', 'sale_date', 'notes']);
+            $newBrand = Brand::find($request->brand_id);
+            if ($newBrand && $newBrand->cost_price !== null) {
+                $updateData['cost_at_sale'] = (float) $newBrand->cost_price;
+            }
+            $sale->update($updateData);
+
             DB::commit();
-            
-            return redirect()->route('admin.sales.index')
+
+            return redirect()->route('admin.sales.show', $sale->id)
                 ->with('success', 'Sale updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -224,6 +240,45 @@ class SaleController extends Controller
                 ->withInput()
                 ->with('error', 'Error updating sale: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Store a payment for a sale (from sale details page).
+     */
+    public function storePayment(Request $request, string $id)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'payment_date' => 'required|date',
+            'method' => 'nullable|string|max:50',
+            'notes' => 'nullable|string',
+        ]);
+
+        $sale = Sale::findOrFail($id);
+        Payment::create([
+            'sale_id' => $sale->id,
+            'amount' => $request->amount,
+            'payment_date' => $request->payment_date,
+            'method' => $request->input('method') ?: Payment::METHOD_CASH,
+            'notes' => $request->notes,
+        ]);
+        $sale->refreshIsPaid();
+
+        return redirect()->route('admin.sales.show', $sale->id)
+            ->with('success', 'Payment added successfully.');
+    }
+
+    /**
+     * Remove a payment (from sale details page).
+     */
+    public function destroyPayment(string $saleId, string $paymentId)
+    {
+        $payment = Payment::where('sale_id', $saleId)->findOrFail($paymentId);
+        $payment->delete();
+        Sale::findOrFail($saleId)->refreshIsPaid();
+
+        return redirect()->route('admin.sales.show', $saleId)
+            ->with('success', 'Payment removed.');
     }
 
     /**

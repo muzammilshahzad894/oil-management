@@ -55,8 +55,8 @@
         @enderror
     </div>
     <div class="col-md-4 mb-3">
-        <label for="price" class="form-label">Price <span class="text-danger">*</span></label>
-        <input type="number" step="0.01" class="form-control @error('price') is-invalid @enderror" id="price" name="price" value="{{ old('price', $sale->price ?? '') }}" min="0" required>
+        <label for="price" class="form-label">Amount <span class="text-danger">*</span></label>
+        <input type="number" step="any" class="form-control @error('price') is-invalid @enderror" id="price" name="price" value="{{ old('price', $sale->price ?? '') }}" min="0" required>
         @error('price')
             <div class="invalid-feedback">{{ $message }}</div>
         @enderror
@@ -69,18 +69,37 @@
         @enderror
     </div>
 </div>
-<div class="row">
-    <div class="col-md-6 mb-3">
-        <label for="is_paid" class="form-label">Payment Status</label>
-        <select class="form-select @error('is_paid') is-invalid @enderror" id="is_paid" name="is_paid">
-            <option value="0" {{ old('is_paid', isset($sale) ? ($sale->is_paid ? '1' : '0') : '0') == '0' ? 'selected' : '' }}>Unpaid</option>
-            <option value="1" {{ old('is_paid', isset($sale) ? ($sale->is_paid ? '1' : '0') : '0') == '1' ? 'selected' : '' }}>Paid</option>
-        </select>
-        @error('is_paid')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
+@if(!isset($sale))
+<div class="card bg-light border-0 mb-3">
+    <div class="card-body py-3">
+        <h6 class="text-muted mb-2"><i class="fas fa-money-bill-wave me-1"></i> Payment received now (optional)</h6>
+        <p class="small text-muted mb-3">If the customer pays something today, enter it below. You can add more payments later from the sale details page. Leave at 0 if unpaid.</p>
+        <div class="row">
+            <div class="col-md-3 mb-2 mb-md-0">
+                <label for="initial_payment" class="form-label">Amount received now</label>
+                <input type="number" step="any" min="0" class="form-control @error('initial_payment') is-invalid @enderror" id="initial_payment" name="initial_payment" value="{{ old('initial_payment', '0') }}" placeholder="0.00">
+                @error('initial_payment')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+            <div class="col-md-3 mb-2 mb-md-0">
+                <label for="initial_payment_date" class="form-label">Date</label>
+                <input type="date" class="form-control" id="initial_payment_date" name="initial_payment_date" value="{{ old('initial_payment_date', date('Y-m-d')) }}">
+            </div>
+            <div class="col-md-3 mb-2 mb-md-0">
+                <label for="initial_payment_method" class="form-label">Method</label>
+                <select class="form-select" id="initial_payment_method" name="initial_payment_method">
+                    @foreach(\App\Models\Payment::methods() as $value => $label)
+                        <option value="{{ $value }}" {{ old('initial_payment_method', 'cash') == $value ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
     </div>
-    <div class="col-md-6 mb-3">
+</div>
+@endif
+<div class="row">
+    <div class="col-md-12 mb-3">
         <label for="notes" class="form-label">Notes</label>
         <textarea class="form-control @error('notes') is-invalid @enderror" id="notes" name="notes" rows="3">{{ old('notes', $sale->notes ?? '') }}</textarea>
         @error('notes')

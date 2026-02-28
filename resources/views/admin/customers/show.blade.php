@@ -6,9 +6,9 @@
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="fas fa-user me-2"></i>Customer Information</span>
-        <a href="{{ route('admin.customers.edit', $customer->id) }}" class="btn btn-sm btn-warning">
-            <i class="fas fa-edit me-2"></i>Edit
-        </a>
+        <div>
+            <a href="{{ route('admin.customers.edit', $customer->id) }}" class="btn btn-sm btn-warning">Edit</a>
+        </div>
     </div>
     <div class="card-body">
         <div class="row">
@@ -33,6 +33,9 @@
     </div>
     <div class="card-body">
         @if($sales->count() > 0)
+            <div class="text-muted small mb-2">
+                Showing {{ $sales->firstItem() }} to {{ $sales->lastItem() }} of {{ $sales->total() }} records
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -41,7 +44,9 @@
                             <th>Brand</th>
                             <th>Quantity</th>
                             <th>Price</th>
+                            <th>Status</th>
                             <th>Notes</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -50,12 +55,33 @@
                                 <td>{{ $sale->sale_date->format('M d, Y') }}</td>
                                 <td>{{ $sale->brand->name }}</td>
                                 <td><span class="badge bg-primary">{{ $sale->quantity }}</span></td>
-                                <td>{{ $sale->price ?? 'N/A' }}</td>
+                                <td>{{ $sale->price !== null ? format_amount($sale->price) : 'N/A' }}</td>
+                                <td>
+                                    @if($sale->total_paid >= $sale->price)
+                                        <span class="badge bg-success">Paid</span>
+                                    @elseif($sale->total_paid > 0)
+                                        <span class="badge bg-warning text-dark">Partial</span>
+                                    @else
+                                        <span class="badge bg-danger">Unpaid</span>
+                                    @endif
+                                </td>
                                 <td>{{ $sale->notes ?? '-' }}</td>
+                                <td>
+                                    <a href="{{ route('admin.sales.show', $sale->id) }}" class="btn btn-sm btn-info">View</a>
+                                    <a href="{{ route('admin.sales.edit', $sale->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ $sale->id }}, '{{ addslashes($customer->name) }}', '{{ addslashes($sale->brand->name) }}')">Delete</button>
+                                    <form id="delete-form-{{ $sale->id }}" action="{{ route('admin.sales.destroy', $sale->id) }}" method="POST" style="display: none;">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+            <div class="text-muted small mt-2">
+                Showing {{ $sales->firstItem() }} to {{ $sales->lastItem() }} of {{ $sales->total() }} records
             </div>
             <div class="mt-4">
                 {{ $sales->links() }}
@@ -65,4 +91,26 @@
         @endif
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmDelete(id, customerName, brandName) {
+        Swal.fire({
+            title: 'Are you sure?',
+            html: '<p>You want to delete this sale?</p><p><strong>Customer:</strong> ' + customerName + '<br><strong>Brand:</strong> ' + brandName + '</p><p class="text-danger"><small>Inventory will be restored automatically.</small></p>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#delete-form-' + id).submit();
+            }
+        });
+    }
+</script>
 @endsection

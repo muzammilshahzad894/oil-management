@@ -8,6 +8,7 @@ use App\Http\Controllers\admin\CustomerController;
 use App\Http\Controllers\admin\SaleController;
 use App\Http\Controllers\admin\ProfileController;
 use App\Http\Controllers\admin\ReportController;
+use App\Http\Controllers\admin\SettingsController;
 use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', function () {
@@ -65,9 +66,15 @@ Route::middleware(['auth'])->group(function () {
     ]);
     Route::post('/admin/customers/search', [CustomerController::class, 'search'])->name('admin.customers.search');
     
+    // Settings
+    Route::get('/admin/settings', [SettingsController::class, 'index'])->name('admin.settings.index');
+    Route::put('/admin/settings', [SettingsController::class, 'update'])->name('admin.settings.update');
+    
     // Sales
     Route::get('/admin/sales/search-customers', [SaleController::class, 'searchCustomers'])->name('admin.sales.search-customers');
     Route::get('/admin/sales/{id}/receipt', [SaleController::class, 'receipt'])->name('admin.sales.receipt');
+    Route::post('/admin/sales/{sale}/payments', [SaleController::class, 'storePayment'])->name('admin.sales.payments.store');
+    Route::delete('/admin/sales/{sale}/payments/{payment}', [SaleController::class, 'destroyPayment'])->name('admin.sales.payments.destroy');
     Route::resource('admin/sales', SaleController::class)->names([
         'index' => 'admin.sales.index',
         'create' => 'admin.sales.create',
@@ -81,6 +88,7 @@ Route::middleware(['auth'])->group(function () {
     // Reports
     Route::get('/admin/reports/customer', [ReportController::class, 'customer'])->name('admin.reports.customer');
     Route::get('/admin/reports/customer/export', [ReportController::class, 'exportExcel'])->name('admin.reports.customer.export');
+    Route::get('/admin/reports/profit-loss', [ReportController::class, 'profitLoss'])->name('admin.reports.profit-loss');
 });
 
 // migrate fresh commands

@@ -803,9 +803,21 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('admin.reports.customer') }}" class="{{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.reports.customer') }}" class="{{ request()->routeIs('admin.reports.customer*') ? 'active' : '' }}">
                     <i class="fas fa-chart-line"></i>
-                    <span>Reports</span>
+                    <span>Customer Report</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('admin.reports.profit-loss') }}" class="{{ request()->routeIs('admin.reports.profit-loss') ? 'active' : '' }}">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Profit &amp; Loss</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
                 </a>
             </li>
         </ul>

@@ -145,6 +145,11 @@
             color: #721c24;
         }
         
+        .payment-status.partial {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
         .print-button {
             text-align: center;
             margin: 20px 0;
@@ -210,7 +215,7 @@
                     </div>
                 </div>
                 <div class="item-details">
-                    <div>{{ $sale->price }}</div>
+                    <div>{{ format_amount($sale->price) }}</div>
                 </div>
             </div>
         </div>
@@ -220,16 +225,31 @@
         <div class="total-section">
             <div class="total-row">
                 <span>Subtotal:</span>
-                <span>{{ $sale->price }}</span>
+                <span>{{ format_amount($sale->price) }}</span>
             </div>
+            @php $totalPaid = $sale->payments->sum('amount'); @endphp
+            @if($totalPaid > 0)
+            <div class="total-row">
+                <span>Paid:</span>
+                <span>{{ format_amount($totalPaid) }}</span>
+            </div>
+            <div class="total-row">
+                <span>Balance:</span>
+                <span>{{ format_amount(max(0, (float)$sale->price - $totalPaid)) }}</span>
+            </div>
+            @endif
             <div class="total-row grand">
                 <span>TOTAL:</span>
-                <span>{{ $sale->price }}</span>
+                <span>{{ format_amount($sale->price) }}</span>
             </div>
         </div>
         
-        <div class="payment-status {{ $sale->is_paid ? 'paid' : 'unpaid' }}">
-            {{ $sale->is_paid ? '✓ PAID' : '● UNPAID' }}
+        @php
+            $paidStatus = $totalPaid >= (float) $sale->price ? 'paid' : ($totalPaid > 0 ? 'partial' : 'unpaid');
+            $paidLabel = $totalPaid >= (float) $sale->price ? '✓ PAID' : ($totalPaid > 0 ? '● PARTIAL' : '● UNPAID');
+        @endphp
+        <div class="payment-status {{ $paidStatus }}">
+            {{ $paidLabel }}
         </div>
         
         @if($sale->notes)

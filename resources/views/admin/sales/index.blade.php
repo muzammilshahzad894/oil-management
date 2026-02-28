@@ -43,6 +43,9 @@
                             <th>Brand</th>
                             <th>Quantity</th>
                             <th>Price</th>
+                            @if($showPurchasePrice)
+                            <th>Purchase price</th>
+                            @endif
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -68,7 +71,10 @@
                                     @endif
                                 </td>
                                 <td><span>{{ $sale->quantity }}</span></td>
-                                <td>{{ $sale->price }}</td>
+                                <td>{{ format_amount($sale->price) }}</td>
+                                @if($showPurchasePrice)
+                                <td>{{ $sale->cost_at_sale !== null ? format_amount($sale->cost_at_sale) : '—' }}</td>
+                                @endif
                                 <td>
                                     @if($sale->is_paid)
                                         <span class="badge bg-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Payment completed">Paid</span>
@@ -77,15 +83,9 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('admin.sales.show', $sale->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" data-bs-placement="top" title="View Sale Details">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.sales.edit', $sale->id) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Sale">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete Sale" onclick="confirmDelete({{ $sale->id }}, '{{ $sale->customer->name }}', '{{ $sale->brand->name }}')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                    <a href="{{ route('admin.sales.show', $sale->id) }}" class="btn btn-sm btn-info" title="View">View</a>
+                                    <a href="{{ route('admin.sales.edit', $sale->id) }}" class="btn btn-sm btn-warning" title="Edit">Edit</a>
+                                    <button type="button" class="btn btn-sm btn-danger" title="Delete" onclick="confirmDelete({{ $sale->id }}, '{{ addslashes($sale->customer->name) }}', '{{ addslashes($sale->brand->name) }}')">Delete</button>
                                     <form id="delete-form-{{ $sale->id }}" action="{{ route('admin.sales.destroy', $sale->id) }}" method="POST" style="display: none;">
                                         @csrf
                                         @method('DELETE')
@@ -96,8 +96,9 @@
                     </tbody>
                 </table>
             </div>
-            
-            <!-- Pagination -->
+            <div class="text-muted small mt-2">
+                Showing {{ $sales->firstItem() }} to {{ $sales->lastItem() }} of {{ $sales->total() }} records
+            </div>
             <div class="mt-4">
                 {{ $sales->links() }}
             </div>

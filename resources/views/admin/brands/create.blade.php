@@ -19,8 +19,16 @@
 @section('scripts')
 <script>
     $(document).ready(function() {
+        function toggleCostPriceRequired() {
+            var q = parseInt($('#quantity').val(), 10) || 0;
+            var $cp = $('#cost_price');
+            var $star = $('.cost-price-required');
+            if (q > 0) { $cp.prop('required', true); $star.show(); } else { $cp.prop('required', false); $star.hide(); }
+        }
+        $('#quantity').on('input', toggleCostPriceRequired);
+        toggleCostPriceRequired();
         $('#brandForm').on('submit', function() {
-            const $btn = $('#submitBtn');
+            var $btn = $('#submitBtn');
             $btn.prop('disabled', true);
             $btn.find('.spinner-border').removeClass('d-none');
             $btn.find('.btn-text').text('Saving...');

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
-use App\Models\Customer;
+use App\Models\Payment;
 use App\Models\Sale;
 use Illuminate\Http\Request;
 
@@ -12,10 +12,11 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $totalCustomers = Customer::count();
-        $totalBrands = Brand::count();
         $totalSales = Sale::count();
         $totalInventory = Brand::sum('quantity');
+        $totalReceived = (float) Payment::sum('amount');
+        $totalCost = (float) Sale::selectRaw('COALESCE(SUM(cost_at_sale * quantity), 0) as total')->value('total');
+        $totalProfit = $totalReceived - $totalCost;
         
         $recentSales = Sale::with([
             'customer' => function($q) {
@@ -33,10 +34,9 @@ class DashboardController extends Controller
             ->get();
         
         return view('admin.dashboard', compact(
-            'totalCustomers',
-            'totalBrands',
             'totalSales',
             'totalInventory',
+            'totalProfit',
             'recentSales',
             'lowStock'
         ));

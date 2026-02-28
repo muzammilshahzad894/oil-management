@@ -4,6 +4,7 @@ namespace App\Http\Controllers\admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\Payment;
 use App\Models\Sale;
 use Illuminate\Http\Request;
 
@@ -27,7 +28,9 @@ class ReportController extends Controller
                 'startDate' => $startDate,
                 'endDate' => $endDate,
                 'selectedCustomer' => null,
-                'hasCustomer' => false
+                'hasCustomer' => false,
+                'totalCost' => 0,
+                'totalProfit' => 0,
             ]);
         }
         
@@ -64,8 +67,35 @@ class ReportController extends Controller
         
         $customers = Customer::orderBy('name')->get();
         $selectedCustomer = Customer::find($request->customer_id);
-        
-        return view('admin.reports.customer', compact('allSales', 'paginatedSales', 'customers', 'startDate', 'endDate', 'selectedCustomer', 'hasCustomer'));
+        $totalCost = $allSales->sum(fn($s) => $s->total_cost ?? 0);
+        $totalProfit = $allSales->filter(fn($s) => $s->cost_at_sale !== null)->sum(fn($s) => $s->profit);
+
+        return view('admin.reports.customer', compact('allSales', 'paginatedSales', 'customers', 'startDate', 'endDate', 'selectedCustomer', 'hasCustomer', 'totalCost', 'totalProfit'));
+    }
+
+    /**
+     * Profit & Loss report by date range.
+     * Uses actual payments received (from payments table) minus cost for actual profit/loss.
+     */
+    public function profitLoss(Request $request)
+    {
+        $startDate = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', now()->format('Y-m-d'));
+
+        $sales = Sale::with(['customer', 'brand'])
+            ->whereBetween('sale_date', [$startDate, $endDate])
+            ->get();
+
+        $saleIds = $sales->pluck('id')->toArray();
+        $totalInvoiced = $sales->sum('price');
+        $totalReceived = (float) Payment::whereIn('sale_id', $saleIds)->sum('amount');
+        $totalCost = $sales->sum(fn($s) => $s->total_cost ?? 0);
+        $totalProfit = $totalReceived - (float) $totalCost;
+
+        return view('admin.reports.profit-loss', compact(
+            'sales', 'startDate', 'endDate',
+            'totalInvoiced', 'totalReceived', 'totalProfit'
+        ));
     }
     
     public function exportExcel(Request $request)
@@ -100,36 +130,33 @@ class ReportController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
         
+        $sales->load('payments');
         $callback = function() use ($sales, $customer) {
             $file = fopen('php://output', 'w');
-            
-            // BOM for Excel UTF-8 support
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            
-            // Header row
             fputcsv($file, ['Customer Report - ' . ($customer ? $customer->name : 'All Customers')]);
             fputcsv($file, ['Generated on: ' . date('Y-m-d H:i:s')]);
-            fputcsv($file, []); // Empty row
-            
-            // Column headers
-            fputcsv($file, ['Date', 'Customer', 'Brand', 'Quantity', 'Price', 'Payment Status']);
-            
-            // Data rows
+            fputcsv($file, []);
+            fputcsv($file, ['Date', 'Customer', 'Brand', 'Quantity', 'Price', 'Cost', 'Profit', 'Payment Status']);
             $totalPaid = 0;
             $totalUnpaid = 0;
             $qtyPaid = 0;
             $qtyUnpaid = 0;
-            
+            $totalCost = 0;
+            $totalProfit = 0;
             foreach ($sales as $sale) {
+                $cost = $sale->cost_at_sale ?? '';
+                $profit = $sale->profit !== null ? $sale->profit : '';
                 fputcsv($file, [
                     $sale->sale_date->format('Y-m-d'),
                     $sale->customer->name,
                     $sale->brand->name,
                     $sale->quantity,
                     $sale->price,
+                    $cost,
+                    $profit,
                     $sale->is_paid ? 'Paid' : 'Unpaid'
                 ]);
-                
                 if ($sale->is_paid) {
                     $totalPaid += $sale->price;
                     $qtyPaid += $sale->quantity;
@@ -137,15 +164,18 @@ class ReportController extends Controller
                     $totalUnpaid += $sale->price;
                     $qtyUnpaid += $sale->quantity;
                 }
+                if ($sale->cost_at_sale !== null) {
+                    $totalCost += $sale->total_cost;
+                    $totalProfit += $sale->profit;
+                }
             }
-            
-            // Empty row
             fputcsv($file, []);
-            
-            // Totals
-            fputcsv($file, ['Total Paid', '', '', $qtyPaid, $totalPaid, $sales->where('is_paid', true)->count() . ' sales']);
-            fputcsv($file, ['Total Unpaid', '', '', $qtyUnpaid, $totalUnpaid, $sales->where('is_paid', false)->count() . ' sales']);
-            
+            fputcsv($file, ['Total Paid', '', '', $qtyPaid, $totalPaid, '', '', $sales->where('is_paid', true)->count() . ' sales']);
+            fputcsv($file, ['Total Unpaid', '', '', $qtyUnpaid, $totalUnpaid, '', '', $sales->where('is_paid', false)->count() . ' sales']);
+            if ($totalCost > 0) {
+                fputcsv($file, ['Total Cost', '', '', '', $totalCost, '', '', '']);
+                fputcsv($file, ['Total Profit', '', '', '', $totalProfit, '', '', '']);
+            }
             fclose($file);
         };
         
