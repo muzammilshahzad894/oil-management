@@ -14,6 +14,30 @@
         </form>
     </div>
 </div>
+
+{{-- Modal: Get from Extra Paid (create sale) --}}
+<div class="modal fade" id="getFromExtraPaidCreateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-wallet me-2"></i>Get from extra paid</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Sale amount: <strong id="createExtraSaleAmount">—</strong></p>
+                <p class="mb-3">Customer extra paid balance: <strong id="createExtraAvailable">—</strong></p>
+                <div class="mb-3">
+                    <label for="createExtraAmount" class="form-label">Amount to use from extra paid <span class="text-danger">*</span></label>
+                    <input type="number" step="any" min="0" class="form-control" id="createExtraAmount" placeholder="0.00">
+                    <div class="form-text">Max: sale amount or extra paid balance, whichever is lower.</div>
+                </div>
+                <button type="button" class="btn btn-success" id="createExtraApplyBtn">
+                    <i class="fas fa-check me-2"></i>Apply
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
@@ -32,6 +56,7 @@
             if (search.length < 2) {
                 $customerDropdown.hide();
                 $customerId.val('');
+                checkExtraPaidAndShowButton();
                 return;
             }
             
@@ -81,6 +106,7 @@
             $customerId.val($option.data('id'));
             $customerSearch.val($option.data('name'));
             $customerDropdown.hide();
+            checkExtraPaidAndShowButton();
         });
         
         $(document).on('click', function(e) {
@@ -171,6 +197,51 @@
             }
         });
         
+        // Get from extra paid (create sale) - show button only when customer has extra paid balance
+        const balanceUrlCreate = '{{ url("admin/customers") }}';
+        function checkExtraPaidAndShowButton() {
+            const customerId = $('#customer_id').val();
+            $('#extraPaidBlock').hide();
+            if (!customerId) return;
+            $.get(balanceUrlCreate + '/' + customerId + '/extra-paid/balance', function(data) {
+                const balance = parseFloat(data.balance) || 0;
+                if (balance > 0) {
+                    $('#extraPaidBlock').show();
+                }
+            });
+        }
+        checkExtraPaidAndShowButton();
+        $('#btnGetFromExtraPaidCreate').on('click', function() {
+            const customerId = $('#customer_id').val();
+            if (!customerId) {
+                alert('Please select a customer first.');
+                return;
+            }
+            const price = parseFloat($('#price').val()) || 0;
+            $('#createExtraSaleAmount').text(price.toFixed(2));
+            $('#createExtraAvailable').text('…');
+            $('#createExtraAmount').val('');
+            var modal = new bootstrap.Modal(document.getElementById('getFromExtraPaidCreateModal'));
+            modal.show();
+            $.get(balanceUrlCreate + '/' + customerId + '/extra-paid/balance', function(data) {
+                const avail = parseFloat(data.balance) || 0;
+                $('#createExtraAvailable').text(data.formatted);
+                $('#createExtraAmount').attr('max', Math.min(price, avail));
+            }).fail(function() {
+                $('#createExtraAvailable').text('0');
+            });
+        });
+        $('#createExtraApplyBtn').on('click', function() {
+            const val = parseFloat($('#createExtraAmount').val()) || 0;
+            $('#initial_extra_paid_amount').val(val);
+            if (val > 0) {
+                $('#extraPaidSummary').text('Using ' + val.toFixed(2) + ' from extra paid').show();
+            } else {
+                $('#extraPaidSummary').hide();
+            }
+            bootstrap.Modal.getInstance(document.getElementById('getFromExtraPaidCreateModal')).hide();
+        });
+
         // Form submit loading
         $('#saleForm').on('submit', function(e) {
             const $clickedButton = $(document.activeElement);

@@ -7,6 +7,7 @@ use App\Models\Sale;
 use App\Models\Customer;
 use App\Models\Brand;
 use App\Models\Payment;
+use App\Models\CustomerExtraPayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -75,10 +76,32 @@ class SaleController extends Controller
             'price' => 'required|numeric|min:0',
             'sale_date' => 'required|date',
             'initial_payment' => 'nullable|numeric|min:0',
+            'initial_extra_paid_amount' => 'nullable|numeric|min:0',
             'initial_payment_date' => 'nullable|date',
             'initial_payment_method' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
         ]);
+
+        $initialExtraPaid = (float) ($request->input('initial_extra_paid_amount') ?? 0);
+        if ($initialExtraPaid > 0) {
+            $extraBalance = CustomerExtraPayment::balanceForCustomer($request->customer_id);
+            if ($initialExtraPaid > $extraBalance) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Extra paid amount exceeds customer balance (' . format_amount($extraBalance) . ').');
+            }
+            if ($initialExtraPaid > (float) $request->price) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Extra paid amount cannot exceed sale amount.');
+            }
+        }
+        $initialAmount = (float) ($request->input('initial_payment') ?? 0);
+        if ($initialAmount + $initialExtraPaid > (float) $request->price) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Total initial payment (cash + extra paid) cannot exceed sale amount.');
+        }
 
         DB::beginTransaction();
         try {
@@ -108,6 +131,11 @@ class SaleController extends Controller
 
             $initialAmount = (float) ($request->input('initial_payment') ?? 0);
             if ($initialAmount > 0) {
+                if ($initialAmount > (float) $sale->price) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'Initial payment cannot exceed the sale amount (' . number_format((float) $sale->price, 2) . ').');
+                }
                 Payment::create([
                     'sale_id' => $sale->id,
                     'amount' => $initialAmount,
@@ -115,6 +143,25 @@ class SaleController extends Controller
                     'method' => $request->input('initial_payment_method') ?: Payment::METHOD_CASH,
                     'reference' => null,
                     'notes' => 'Initial payment',
+                ]);
+                $sale->refreshIsPaid();
+            }
+
+            if ($initialExtraPaid > 0) {
+                $payment = Payment::create([
+                    'sale_id' => $sale->id,
+                    'amount' => $initialExtraPaid,
+                    'payment_date' => $request->input('initial_payment_date') ?: $request->sale_date,
+                    'method' => Payment::METHOD_EXTRA_PAID,
+                    'reference' => null,
+                    'notes' => 'From extra paid',
+                ]);
+                CustomerExtraPayment::create([
+                    'customer_id' => $sale->customer_id,
+                    'amount' => -$initialExtraPaid,
+                    'sale_id' => $sale->id,
+                    'payment_id' => $payment->id,
+                    'note' => 'Used for Sale #' . $sale->id,
                 ]);
                 $sale->refreshIsPaid();
             }
@@ -247,14 +294,30 @@ class SaleController extends Controller
      */
     public function storePayment(Request $request, string $id)
     {
+        $sale = Sale::findOrFail($id);
+        $maxAllowed = max(0, (float) $sale->price - $sale->total_paid);
+
+        if ($maxAllowed <= 0) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['amount' => 'This sale is already fully paid.']);
+        }
+
         $request->validate([
-            'amount' => 'required|numeric|min:0.01',
+            'amount' => ['required', 'numeric', 'min:0.01', 'max:' . $maxAllowed],
             'payment_date' => 'required|date',
             'method' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
+        ], [
+            'amount.max' => 'Payment cannot exceed the balance due (' . number_format($maxAllowed, 2) . ').',
         ]);
 
-        $sale = Sale::findOrFail($id);
+        if ($request->amount > $maxAllowed) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['amount' => 'Payment cannot exceed the balance due (' . number_format($maxAllowed, 2) . ').']);
+        }
+
         Payment::create([
             'sale_id' => $sale->id,
             'amount' => $request->amount,
@@ -299,6 +362,7 @@ class SaleController extends Controller
             $sale->delete();
             
             DB::commit();
+            $sale->payments()->delete();
             
             return redirect()->route('admin.sales.index')
                 ->with('success', 'Sale deleted successfully and inventory restored.');

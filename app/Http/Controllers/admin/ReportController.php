@@ -94,7 +94,7 @@ class ReportController extends Controller
 
         return view('admin.reports.profit-loss', compact(
             'sales', 'startDate', 'endDate',
-            'totalInvoiced', 'totalReceived', 'totalProfit'
+            'totalInvoiced', 'totalReceived', 'totalCost', 'totalProfit'
         ));
     }
     

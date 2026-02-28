@@ -22,6 +22,7 @@
                         <td>
                             <a href="{{ route('admin.sales.create', ['customer_id' => $customer->id]) }}" class="btn btn-sm btn-success">New Sale</a>
                             <a href="{{ route('admin.customers.show', $customer->id) }}" class="btn btn-sm btn-info">History</a>
+                            <button type="button" class="btn btn-sm btn-outline-secondary btn-extra-paid" data-customer-id="{{ $customer->id }}" data-customer-name="{{ addslashes($customer->name) }}">Extra paid</button>
                             <a href="{{ route('admin.customers.edit', $customer->id) }}" class="btn btn-sm btn-warning">Edit</a>
                             <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ $customer->id }}, '{{ addslashes($customer->name) }}')">Delete</button>
                             <form id="delete-form-{{ $customer->id }}" action="{{ route('admin.customers.destroy', $customer->id) }}" method="POST" style="display: none;">

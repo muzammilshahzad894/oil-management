@@ -17,6 +17,20 @@ class Customer extends Model
     ];
 
     /**
+     * Get the extra paid transactions for the customer.
+     */
+    public function extraPayments(): HasMany
+    {
+        return $this->hasMany(CustomerExtraPayment::class);
+    }
+
+    /** Get current extra paid balance (sum of all transaction amounts). */
+    public function getExtraPaidBalanceAttribute(): float
+    {
+        return (float) $this->extraPayments()->sum('amount');
+    }
+
+    /**
      * Get the sales for the customer.
      */
     public function sales(): HasMany

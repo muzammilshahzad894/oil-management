@@ -76,8 +76,10 @@
                                 <td>{{ $sale->cost_at_sale !== null ? format_amount($sale->cost_at_sale) : '—' }}</td>
                                 @endif
                                 <td>
-                                    @if($sale->is_paid)
+                                    @if($sale->total_paid >= (float) $sale->price)
                                         <span class="badge bg-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Payment completed">Paid</span>
+                                    @elseif($sale->total_paid > 0)
+                                        <span class="badge bg-warning text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Partial payment">Partial</span>
                                     @else
                                         <span class="badge bg-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Payment pending">Unpaid</span>
                                     @endif

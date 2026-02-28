@@ -28,6 +28,7 @@ class Payment extends Model
     public const METHOD_BANK = 'bank';
     public const METHOD_CHEQUE = 'cheque';
     public const METHOD_OTHER = 'other';
+    public const METHOD_EXTRA_PAID = 'extra_paid';
 
     public static function methods(): array
     {
@@ -35,6 +36,7 @@ class Payment extends Model
             self::METHOD_CASH => 'Cash',
             self::METHOD_BANK => 'Bank Transfer',
             self::METHOD_CHEQUE => 'Cheque',
+            self::METHOD_EXTRA_PAID => 'From Extra Paid',
             self::METHOD_OTHER => 'Other',
         ];
     }

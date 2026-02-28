@@ -61,9 +61,12 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="fas fa-money-bill-wave me-2"></i>Payments</span>
+        <button type="button" class="btn btn-sm btn-primary" id="btnExtraPaid" data-customer-id="{{ $sale->customer_id }}" data-customer-name="{{ addslashes($sale->customer->name) }}">
+            <i class="fas fa-wallet me-1"></i>Add extra paid
+        </button>
     </div>
     <div class="card-body">
-        <form action="{{ route('admin.sales.payments.store', $sale->id) }}" method="POST" class="row g-3 mb-4 p-3 bg-light rounded">
+        <form action="{{ route('admin.sales.payments.store', $sale->id) }}" method="POST" class="row g-3 mb-4 p-3 bg-light rounded" id="addPaymentForm">
             @csrf
             <div class="col-md-2">
                 <label for="amount" class="form-label">Amount <span class="text-danger">*</span></label>
@@ -87,10 +90,15 @@
                 <label for="notes" class="form-label">Notes</label>
                 <input type="text" class="form-control" id="notes" name="notes" value="{{ old('notes') }}" placeholder="Optional">
             </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary w-100">
+            <div class="col-12 col-md-4 d-flex align-items-end gap-2 flex-nowrap">
+                <button type="submit" class="btn btn-primary">
                     <i class="fas fa-plus me-2"></i>Add Payment
                 </button>
+                @if($sale->balance_due > 0)
+                <button type="button" class="btn btn-outline-success" id="btnGetFromExtraPaid" title="Get from extra paid" data-sale-id="{{ $sale->id }}" data-balance-due="{{ $sale->balance_due }}">
+                    <i class="fas fa-wallet"></i>
+                </button>
+                @endif
             </div>
         </form>
 
@@ -136,6 +144,72 @@
         <i class="fas fa-arrow-left me-2"></i>Back to Sales
     </a>
 </div>
+
+{{-- Modal: Add Extra Paid --}}
+<div class="modal fade" id="extraPaidModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-wallet me-2"></i>Add extra paid</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Customer: <strong id="extraPaidCustomerName"></strong></p>
+                <p class="mb-3">Current extra paid balance: <strong id="extraPaidBalance">—</strong></p>
+                <form id="extraPaidForm">
+                    <input type="hidden" id="extraPaidCustomerId" name="customer_id">
+                    @csrf
+                    <div class="mb-3">
+                        <label for="extraPaidAmount" class="form-label">Amount to add <span class="text-danger">*</span></label>
+                        <input type="number" step="any" min="0.01" class="form-control" id="extraPaidAmount" name="amount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="extraPaidNote" class="form-label">Note (optional)</label>
+                        <input type="text" class="form-control" id="extraPaidNote" name="note" placeholder="e.g. Advance received">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="extraPaidSubmitBtn">
+                        <i class="fas fa-save me-2"></i>Save
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal: Get from Extra Paid (for this sale) --}}
+<div class="modal fade" id="getFromExtraPaidModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-wallet me-2"></i>Get from extra paid</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Balance due on this sale: <strong id="getExtraBalanceDue">—</strong></p>
+                <p class="mb-3">Customer extra paid balance: <strong id="getExtraAvailable">—</strong></p>
+                <form action="{{ route('admin.sales.payments.from-extra-paid', $sale->id) }}" method="POST" id="getFromExtraPaidForm">
+                    @csrf
+                    <div class="mb-3">
+                        <label for="getExtraAmount" class="form-label">Amount to use <span class="text-danger">*</span></label>
+                        <input type="number" step="any" min="0.01" class="form-control" id="getExtraAmount" name="amount" required>
+                        <div class="form-text">Max: balance due or extra paid balance, whichever is lower.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="getExtraPaymentDate" class="form-label">Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="getExtraPaymentDate" name="payment_date" value="{{ date('Y-m-d') }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="getExtraNotes" class="form-label">Notes (optional)</label>
+                        <input type="text" class="form-control" id="getExtraNotes" name="notes" placeholder="From extra paid">
+                    </div>
+                    <button type="submit" class="btn btn-success" id="getFromExtraSubmitBtn">
+                        <i class="fas fa-check me-2"></i>Apply as payment
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
@@ -157,5 +231,84 @@
             }
         });
     }
+
+    $(document).ready(function() {
+        const balanceUrl = '{{ url("admin/customers") }}';
+        const storeExtraUrl = '{{ url("admin/customers") }}';
+
+        $('#btnExtraPaid').on('click', function() {
+            const customerId = $(this).data('customer-id');
+            const customerName = $(this).data('customer-name');
+            $('#extraPaidCustomerId').val(customerId);
+            $('#extraPaidCustomerName').text(customerName);
+            $('#extraPaidAmount').val('');
+            $('#extraPaidNote').val('');
+            $('#extraPaidBalance').text('…');
+            var modal = new bootstrap.Modal(document.getElementById('extraPaidModal'));
+            modal.show();
+            $.get(balanceUrl + '/' + customerId + '/extra-paid/balance', function(data) {
+                $('#extraPaidBalance').text(data.formatted);
+            }).fail(function() {
+                $('#extraPaidBalance').text('0');
+            });
+        });
+
+        $('#extraPaidForm').on('submit', function(e) {
+            e.preventDefault();
+            const customerId = $('#extraPaidCustomerId').val();
+            const $btn = $('#extraPaidSubmitBtn').prop('disabled', true);
+            $.ajax({
+                url: storeExtraUrl + '/' + customerId + '/extra-paid',
+                method: 'POST',
+                data: {
+                    _token: $('#extraPaidForm input[name="_token"]').val(),
+                    amount: $('#extraPaidAmount').val(),
+                    note: $('#extraPaidNote').val()
+                },
+                success: function(data) {
+                    $('#extraPaidBalance').text(data.formatted);
+                    $('#extraPaidAmount').val('');
+                    $('#extraPaidNote').val('');
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'success', title: 'Saved', text: data.message }).then(function() {
+                            window.location.reload();
+                        });
+                    } else {
+                        alert(data.message);
+                        window.location.reload();
+                    }
+                },
+                error: function(xhr) {
+                    var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error saving.';
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                    } else {
+                        alert(msg);
+                    }
+                },
+                complete: function() {
+                    $btn.prop('disabled', false);
+                }
+            });
+        });
+
+        $('#btnGetFromExtraPaid').on('click', function() {
+            const saleId = $(this).data('sale-id');
+            const balanceDue = parseFloat($(this).data('balance-due')) || 0;
+            const customerId = {{ $sale->customer_id }};
+            $('#getExtraBalanceDue').text(balanceDue.toFixed(2));
+            $('#getExtraAvailable').text('…');
+            $('#getExtraAmount').attr('max', balanceDue);
+            var modal = new bootstrap.Modal(document.getElementById('getFromExtraPaidModal'));
+            modal.show();
+            $.get(balanceUrl + '/' + customerId + '/extra-paid/balance', function(data) {
+                const avail = parseFloat(data.balance) || 0;
+                $('#getExtraAvailable').text(data.formatted);
+                $('#getExtraAmount').attr('max', Math.min(balanceDue, avail));
+            }).fail(function() {
+                $('#getExtraAvailable').text('0');
+            });
+        });
+    });
 </script>
 @endsection

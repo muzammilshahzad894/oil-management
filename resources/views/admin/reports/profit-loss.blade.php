@@ -25,7 +25,7 @@
         </form>
 
         <div class="row mb-4">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="stat-card border-primary">
                     <div class="stat-icon bg-primary bg-opacity-10 text-primary">
                         <i class="fas fa-file-invoice-dollar"></i>
@@ -34,7 +34,7 @@
                     <div class="stat-label">Total Invoiced</div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="stat-card border-info">
                     <div class="stat-icon bg-info bg-opacity-10 text-info">
                         <i class="fas fa-money-bill-wave"></i>
@@ -43,7 +43,16 @@
                     <div class="stat-label">Actual Received</div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+                <div class="stat-card border-secondary">
+                    <div class="stat-icon bg-secondary bg-opacity-10 text-secondary">
+                        <i class="fas fa-tag"></i>
+                    </div>
+                    <div class="stat-value">{{ format_amount($totalCost ?? 0) }}</div>
+                    <div class="stat-label">Purchase Cost</div>
+                </div>
+            </div>
+            <div class="col-md-3">
                 <div class="stat-card {{ ($totalProfit ?? 0) >= 0 ? 'border-success' : 'border-danger' }}">
                     <div class="stat-icon {{ ($totalProfit ?? 0) >= 0 ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger' }}">
                         <i class="fas fa-chart-line"></i>

@@ -73,8 +73,8 @@
 <div class="card bg-light border-0 mb-3">
     <div class="card-body py-3">
         <h6 class="text-muted mb-2"><i class="fas fa-money-bill-wave me-1"></i> Payment received now (optional)</h6>
-        <p class="small text-muted mb-3">If the customer pays something today, enter it below. You can add more payments later from the sale details page. Leave at 0 if unpaid.</p>
-        <div class="row">
+        <p class="small text-muted mb-3">If the customer pays something today, enter it below. You can use extra paid balance or add more payments later from the sale details page. Leave at 0 if unpaid.</p>
+        <div class="row align-items-end">
             <div class="col-md-3 mb-2 mb-md-0">
                 <label for="initial_payment" class="form-label">Amount received now</label>
                 <input type="number" step="any" min="0" class="form-control @error('initial_payment') is-invalid @enderror" id="initial_payment" name="initial_payment" value="{{ old('initial_payment', '0') }}" placeholder="0.00">
@@ -82,17 +82,25 @@
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
-            <div class="col-md-3 mb-2 mb-md-0">
+            <div class="col-md-2 mb-2 mb-md-0">
                 <label for="initial_payment_date" class="form-label">Date</label>
                 <input type="date" class="form-control" id="initial_payment_date" name="initial_payment_date" value="{{ old('initial_payment_date', date('Y-m-d')) }}">
             </div>
-            <div class="col-md-3 mb-2 mb-md-0">
+            <div class="col-md-2 mb-2 mb-md-0">
                 <label for="initial_payment_method" class="form-label">Method</label>
                 <select class="form-select" id="initial_payment_method" name="initial_payment_method">
                     @foreach(\App\Models\Payment::methods() as $value => $label)
                         <option value="{{ $value }}" {{ old('initial_payment_method', 'cash') == $value ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
+            </div>
+            <div class="col-md-3 mb-2 mb-md-0" id="extraPaidBlock" style="display: none;">
+                <label class="form-label d-block">&nbsp;</label>
+                <button type="button" class="btn btn-outline-success" id="btnGetFromExtraPaidCreate" title="Get from extra paid">
+                    <i class="fas fa-wallet me-1"></i>Get from extra paid
+                </button>
+                <input type="hidden" name="initial_extra_paid_amount" id="initial_extra_paid_amount" value="{{ old('initial_extra_paid_amount', '0') }}">
+                <span id="extraPaidSummary" class="small text-success ms-2" style="display: none;"></span>
             </div>
         </div>
     </div>

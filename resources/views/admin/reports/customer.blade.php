@@ -79,6 +79,7 @@
                             <th>Quantity</th>
                             <th>Price</th>
                             <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -104,13 +105,16 @@
                                 <td><span>{{ $sale->quantity }}</span></td>
                                 <td>{{ format_amount($sale->price) }}</td>
                                 <td>
-                                    @if($sale->total_paid >= $sale->price)
+                                    @if($sale->total_paid >= (float) $sale->price)
                                         <span class="badge bg-success">Paid</span>
                                     @elseif($sale->total_paid > 0)
                                         <span class="badge bg-warning text-dark">Partial</span>
                                     @else
                                         <span class="badge bg-danger">Unpaid</span>
                                     @endif
+                                </td>
+                                <td>
+                                    <a href="{{ route('admin.sales.show', $sale->id) }}" class="btn btn-sm btn-info" title="View sale">View Sale</a>
                                 </td>
                             </tr>
                         @endforeach
@@ -121,27 +125,15 @@
                             <th colspan="3" class="text-end">Total Paid:</th>
                             <th>{{ format_amount($allSales->where('is_paid', true)->sum('price')) }}</th>
                             <th>{{ $allSales->where('is_paid', true)->count() }} sales</th>
+                            <th></th>
                         </tr>
                         <tr>
                             <th></th>
                             <th colspan="3" class="text-end">Total Unpaid:</th>
                             <th>{{ format_amount($allSales->where('is_paid', false)->sum('price')) }}</th>
                             <th>{{ $allSales->where('is_paid', false)->count() }} sales</th>
-                        </tr>
-                        @if($totalCost > 0)
-                        <tr>
-                            <th></th>
-                            <th colspan="3" class="text-end">Total Cost:</th>
-                            <th>{{ format_amount($totalCost) }}</th>
                             <th></th>
                         </tr>
-                        <tr>
-                            <th></th>
-                            <th colspan="3" class="text-end">Total Profit:</th>
-                            <th class="{{ $totalProfit >= 0 ? 'text-success' : 'text-danger' }}">{{ format_amount($totalProfit) }}</th>
-                            <th></th>
-                        </tr>
-                        @endif
                     </tfoot>
                 </table>
             </div>

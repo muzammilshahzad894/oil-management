@@ -9,6 +9,7 @@ use App\Http\Controllers\admin\SaleController;
 use App\Http\Controllers\admin\ProfileController;
 use App\Http\Controllers\admin\ReportController;
 use App\Http\Controllers\admin\SettingsController;
+use App\Http\Controllers\admin\ExtraPaidController;
 use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', function () {
@@ -65,6 +66,8 @@ Route::middleware(['auth'])->group(function () {
         'destroy' => 'admin.customers.destroy',
     ]);
     Route::post('/admin/customers/search', [CustomerController::class, 'search'])->name('admin.customers.search');
+    Route::get('/admin/customers/{customer}/extra-paid/balance', [ExtraPaidController::class, 'balance'])->name('admin.customers.extra-paid.balance');
+    Route::post('/admin/customers/{customer}/extra-paid', [ExtraPaidController::class, 'store'])->name('admin.customers.extra-paid.store');
     
     // Settings
     Route::get('/admin/settings', [SettingsController::class, 'index'])->name('admin.settings.index');
@@ -74,6 +77,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/sales/search-customers', [SaleController::class, 'searchCustomers'])->name('admin.sales.search-customers');
     Route::get('/admin/sales/{id}/receipt', [SaleController::class, 'receipt'])->name('admin.sales.receipt');
     Route::post('/admin/sales/{sale}/payments', [SaleController::class, 'storePayment'])->name('admin.sales.payments.store');
+    Route::post('/admin/sales/{sale}/payments/from-extra-paid', [ExtraPaidController::class, 'useForSalePayment'])->name('admin.sales.payments.from-extra-paid');
     Route::delete('/admin/sales/{sale}/payments/{payment}', [SaleController::class, 'destroyPayment'])->name('admin.sales.payments.destroy');
     Route::resource('admin/sales', SaleController::class)->names([
         'index' => 'admin.sales.index',

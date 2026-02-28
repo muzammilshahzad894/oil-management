@@ -196,6 +196,15 @@
 
 @section('styles')
 <style>
+    #customer_dropdown,
+    #brand_dropdown {
+        max-height: 250px !important;
+        overflow-y: auto;
+        overflow-x: hidden;
+        z-index: 9999 !important;
+        position: absolute !important;
+    }
+    
     .customer-dropdown-wrapper {
         position: relative;
     }
@@ -216,7 +225,6 @@
         overflow: visible !important;
     }
 
-    
     .dropdown-item {
         cursor: pointer;
         padding: 0.75rem 1rem;
@@ -228,6 +236,10 @@
     
     .customer-option, .brand-option {
         display: block;
+    }
+    
+    .position-relative {
+        z-index: 1;
     }
 
     /* Available stock - visible and clear */
