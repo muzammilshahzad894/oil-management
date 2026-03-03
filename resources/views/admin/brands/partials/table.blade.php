@@ -7,7 +7,9 @@
                     <th>Description</th>
                     <th>Stock</th>
                     <th>Sold</th>
+                    @if($showPurchasePrice ?? true)
                     <th>Purchase price</th>
+                    @endif
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -22,7 +24,9 @@
                             </span>
                         </td>
                         <td>{{ $brand->sales_sum_quantity ?? 0 }}</td>
+                        @if($showPurchasePrice ?? true)
                         <td>{{ $brand->cost_price !== null ? format_amount($brand->cost_price) : '—' }}</td>
+                        @endif
                         <td>
                             <a href="{{ route('admin.brands.show', $brand->id) }}" class="btn btn-sm btn-info">View</a>
                             <a href="{{ route('admin.brands.edit', $brand->id) }}" class="btn btn-sm btn-warning">Edit</a>

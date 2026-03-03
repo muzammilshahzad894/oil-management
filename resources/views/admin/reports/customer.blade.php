@@ -77,7 +77,8 @@
                             <th>Customer</th>
                             <th>Brand</th>
                             <th>Quantity</th>
-                            <th>Price</th>
+                            <th>Total Amount</th>
+                            <th>Remaining Amount</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -104,6 +105,7 @@
                                 </td>
                                 <td><span>{{ $sale->quantity }}</span></td>
                                 <td>{{ format_amount($sale->price) }}</td>
+                                <td>{{ format_amount($sale->balance_due) }}</td>
                                 <td>
                                     @if($sale->total_paid >= (float) $sale->price)
                                         <span class="badge bg-success">Paid</span>
@@ -122,12 +124,16 @@
                     <tfoot class="table-light">
                         <tr>
                             <th></th>
+                            <th></th>
+                            <th></th>
                             <th colspan="3" class="text-end">Total Paid:</th>
                             <th>{{ format_amount($allSales->where('is_paid', true)->sum('price')) }}</th>
                             <th>{{ $allSales->where('is_paid', true)->count() }} sales</th>
                             <th></th>
                         </tr>
                         <tr>
+                            <th></th>
+                            <th></th>
                             <th></th>
                             <th colspan="3" class="text-end">Total Unpaid:</th>
                             <th>{{ format_amount($allSales->where('is_paid', false)->sum('price')) }}</th>

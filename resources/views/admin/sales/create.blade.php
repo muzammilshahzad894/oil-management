@@ -14,33 +14,10 @@
         </form>
     </div>
 </div>
-
-{{-- Modal: Get from Extra Paid (create sale) --}}
-<div class="modal fade" id="getFromExtraPaidCreateModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-wallet me-2"></i>Get from extra paid</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-2">Sale amount: <strong id="createExtraSaleAmount">—</strong></p>
-                <p class="mb-3">Customer extra paid balance: <strong id="createExtraAvailable">—</strong></p>
-                <div class="mb-3">
-                    <label for="createExtraAmount" class="form-label">Amount to use from extra paid <span class="text-danger">*</span></label>
-                    <input type="number" step="any" min="0" class="form-control" id="createExtraAmount" placeholder="0.00">
-                    <div class="form-text">Max: sale amount or extra paid balance, whichever is lower.</div>
-                </div>
-                <button type="button" class="btn btn-success" id="createExtraApplyBtn">
-                    <i class="fas fa-check me-2"></i>Apply
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 @endsection
 
 @section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     $(document).ready(function() {
         // Customer search with AJAX and debouncing
@@ -56,7 +33,7 @@
             if (search.length < 2) {
                 $customerDropdown.hide();
                 $customerId.val('');
-                checkExtraPaidAndShowButton();
+                fetchExtraPaidAndShowOffer();
                 return;
             }
             
@@ -106,7 +83,7 @@
             $customerId.val($option.data('id'));
             $customerSearch.val($option.data('name'));
             $customerDropdown.hide();
-            checkExtraPaidAndShowButton();
+            fetchExtraPaidAndShowOffer();
         });
         
         $(document).on('click', function(e) {
@@ -122,11 +99,23 @@
         const $brandDropdown = $('#brand_dropdown');
         const allBrands = @json($brands);
         
+        function updateAmountFromBrandAndQuantity() {
+            const brandId = $brandId.val();
+            if (!brandId) return;
+            const brand = allBrands.find(function(b) { return b.id == brandId; });
+            if (!brand) return;
+            const qty = parseInt($('#quantity').val(), 10) || 0;
+            const salePrice = parseFloat(brand.sale_price) || 0;
+            const calculated = qty * salePrice;
+            $('#price').val(calculated > 0 ? calculated : '');
+        }
+
         function showAllBrands() {
             let html = '';
             $.each(allBrands, function(index, brand) {
                 const stock = brand.quantity ?? 0;
-                html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '" data-stock="' + stock + '">' +
+                const salePrice = brand.sale_price != null ? brand.sale_price : '';
+                html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '" data-stock="' + stock + '" data-sale-price="' + salePrice + '">' +
                     brand.name + ' (Stock: ' + stock + ')' +
                     '</a>';
             });
@@ -152,7 +141,8 @@
                         let html = '';
                         $.each(filtered, function(index, brand) {
                             const stock = brand.quantity ?? 0;
-                            html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '" data-stock="' + stock + '">' +
+                            const salePrice = brand.sale_price != null ? brand.sale_price : '';
+                            html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '" data-stock="' + stock + '" data-sale-price="' + salePrice + '">' +
                                 brand.name + ' (Stock: ' + stock + ')' +
                                 '</a>';
                         });
@@ -181,6 +171,14 @@
                 $stockInfo.html('<i class="fas fa-box me-2"></i>Available stock: <span class="stock-number">' + stock + '</span>').show();
                 $stockInfo.removeClass('stock-info-low stock-info-ok').addClass(parseInt(stock) < 10 ? 'stock-info-low' : 'stock-info-ok');
             }
+            // Calculate amount from sale price × quantity (admin can still edit amount)
+            updateAmountFromBrandAndQuantity();
+        });
+
+        // When quantity changes, recalculate amount if a brand is selected
+        $('#quantity').on('input', function() {
+            updateAmountFromBrandAndQuantity();
+            if ($('#extraPaidOfferCard').is(':visible')) updateExtraPaidBreakdown();
         });
         
         $(document).on('click', function(e) {
@@ -196,69 +194,123 @@
                 $brandDropdown.show();
             }
         });
-        
-        // Get from extra paid (create sale) - show button only when customer has extra paid balance
+
+        // Restore brand and stock when form is re-displayed after validation error
+        (function restoreBrandAndStock() {
+            const brandId = $('#brand_id').val();
+            if (!brandId) return;
+            const brand = allBrands.find(function(b) { return String(b.id) === String(brandId); });
+            if (brand) {
+                const stock = brand.quantity ?? 0;
+                $('#stock-info').html('<i class="fas fa-box me-2"></i>Available stock: <span class="stock-number">' + stock + '</span>').show()
+                    .removeClass('stock-info-low stock-info-ok').addClass(parseInt(stock) < 10 ? 'stock-info-low' : 'stock-info-ok');
+            }
+        })();
+
+        // Extra paid: show offer when customer has balance; checkbox to use in this sale
         const balanceUrlCreate = '{{ url("admin/customers") }}';
-        function checkExtraPaidAndShowButton() {
-            const customerId = $('#customer_id').val();
-            $('#extraPaidBlock').hide();
-            if (!customerId) return;
-            $.get(balanceUrlCreate + '/' + customerId + '/extra-paid/balance', function(data) {
-                const balance = parseFloat(data.balance) || 0;
-                if (balance > 0) {
-                    $('#extraPaidBlock').show();
-                }
-            });
-        }
-        checkExtraPaidAndShowButton();
-        $('#btnGetFromExtraPaidCreate').on('click', function() {
-            const customerId = $('#customer_id').val();
-            if (!customerId) {
-                alert('Please select a customer first.');
+        let extraPaidBalance = 0;
+
+        function updateExtraPaidBreakdown() {
+            if (!$('#use_extra_paid_checkbox').is(':checked')) {
+                $('#initial_extra_paid_amount').val('0');
+                $('#extraPaidBreakdown').hide();
                 return;
             }
             const price = parseFloat($('#price').val()) || 0;
-            $('#createExtraSaleAmount').text(price.toFixed(2));
-            $('#createExtraAvailable').text('…');
-            $('#createExtraAmount').val('');
-            var modal = new bootstrap.Modal(document.getElementById('getFromExtraPaidCreateModal'));
-            modal.show();
-            $.get(balanceUrlCreate + '/' + customerId + '/extra-paid/balance', function(data) {
-                const avail = parseFloat(data.balance) || 0;
-                $('#createExtraAvailable').text(data.formatted);
-                $('#createExtraAmount').attr('max', Math.min(price, avail));
-            }).fail(function() {
-                $('#createExtraAvailable').text('0');
-            });
-        });
-        $('#createExtraApplyBtn').on('click', function() {
-            const val = parseFloat($('#createExtraAmount').val()) || 0;
-            $('#initial_extra_paid_amount').val(val);
-            if (val > 0) {
-                $('#extraPaidSummary').text('Using ' + val.toFixed(2) + ' from extra paid').show();
+            const useAmount = Math.min(extraPaidBalance, price);
+            $('#initial_extra_paid_amount').val(useAmount > 0 ? useAmount : '0');
+            if (useAmount > 0) {
+                const remaining = price - useAmount;
+                $('#extraPaidBreakdown').html('Total amount: ' + price + ' — Using ' + useAmount + ' from extra paid → <strong>' + remaining + ' remaining</strong> to collect.').show();
             } else {
-                $('#extraPaidSummary').hide();
+                $('#extraPaidBreakdown').hide();
             }
-            bootstrap.Modal.getInstance(document.getElementById('getFromExtraPaidCreateModal')).hide();
+        }
+
+        function fetchExtraPaidAndShowOffer() {
+            const customerId = $('#customer_id').val();
+            $('#extraPaidOfferCard').hide();
+            $('#use_extra_paid_checkbox').prop('checked', false);
+            $('#initial_extra_paid_amount').val('0');
+            extraPaidBalance = 0;
+            if (!customerId) return;
+            $.get(balanceUrlCreate + '/' + customerId + '/extra-paid/balance', function(data) {
+                extraPaidBalance = parseFloat(data.balance) || 0;
+                if (extraPaidBalance > 0) {
+                    $('#extraPaidOfferText').text('This customer has an amount of ' + data.formatted + ' extra paid. Do you want to use that extra paid amount in this sale?');
+                    $('#extraPaidOfferCard').show();
+                    var oldExtra = parseFloat($('#initial_extra_paid_amount').val()) || 0;
+                    if (oldExtra > 0) $('#use_extra_paid_checkbox').prop('checked', true);
+                    updateExtraPaidBreakdown();
+                }
+            });
+        }
+
+        $('#use_extra_paid_checkbox').on('change', updateExtraPaidBreakdown);
+        $('#price').on('input', function() {
+            if ($('#extraPaidOfferCard').is(':visible')) updateExtraPaidBreakdown();
         });
 
-        // Form submit loading
+        if ($('#customer_id').val()) fetchExtraPaidAndShowOffer();
+
+        // Form submit: confirm when paying more than sale total (excess goes to wallet)
+        var _allowOverpaymentSubmit = false;
         $('#saleForm').on('submit', function(e) {
+            if (_allowOverpaymentSubmit) {
+                _allowOverpaymentSubmit = false;
+                return;
+            }
+            const price = parseFloat($('#price').val()) || 0;
+            const initialPayment = parseFloat($('#initial_payment').val()) || 0;
+            const fromExtra = parseFloat($('#initial_extra_paid_amount').val()) || 0;
+            const totalPaying = initialPayment + fromExtra;
+            if (price > 0 && totalPaying > price) {
+                e.preventDefault();
+                const excess = totalPaying - price;
+                var msg = 'Total sale cost is ' + price + ' and you are paying ' + totalPaying + '. Remaining ' + excess + ' will be added to the customer\'s wallet.';
+                function reenableSubmitButtons() {
+                    $('#submitBtn, #submitPrintBtn').prop('disabled', false);
+                    $('#submitBtn .spinner-border, #submitPrintBtn .spinner-border').addClass('d-none');
+                    $('#submitBtn .btn-text').text('Save');
+                    $('#submitPrintBtn .btn-text').text('Save and Print');
+                }
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Add extra to wallet?',
+                        html: '<p>' + msg + '</p>',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'OK',
+                        cancelButtonText: 'Cancel'
+                    }).then(function(r) {
+                        if (r.isConfirmed) {
+                            _allowOverpaymentSubmit = true;
+                            $('#saleForm').submit();
+                        } else {
+                            reenableSubmitButtons();
+                        }
+                    });
+                } else {
+                    if (confirm(msg + '\n\nClick OK to continue or Cancel to go back.')) {
+                        _allowOverpaymentSubmit = true;
+                        $('#saleForm').submit();
+                    } else {
+                        reenableSubmitButtons();
+                    }
+                }
+                return;
+            }
             const $clickedButton = $(document.activeElement);
             const isPrintButton = $clickedButton.attr('name') === 'action' && $clickedButton.val() === 'save_and_print';
-            
             const $btn = isPrintButton ? $('#submitPrintBtn') : $('#submitBtn');
             const $otherBtn = isPrintButton ? $('#submitBtn') : $('#submitPrintBtn');
-            
             if ($btn.length) {
                 $btn.prop('disabled', true);
                 $btn.find('.spinner-border').removeClass('d-none');
                 $btn.find('.btn-text').text(isPrintButton ? 'Saving & Printing...' : 'Saving...');
             }
-            
-            if ($otherBtn.length) {
-                $otherBtn.prop('disabled', true);
-            }
+            if ($otherBtn.length) $otherBtn.prop('disabled', true);
         });
     });
 </script>

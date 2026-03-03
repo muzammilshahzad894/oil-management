@@ -42,7 +42,8 @@
                             <th>Customer</th>
                             <th>Brand</th>
                             <th>Quantity</th>
-                            <th>Price</th>
+                            <th>Total Amount</th>
+                            <th>Remaining Amount</th>
                             @if($showPurchasePrice)
                             <th>Purchase price</th>
                             @endif
@@ -72,6 +73,7 @@
                                 </td>
                                 <td><span>{{ $sale->quantity }}</span></td>
                                 <td>{{ format_amount($sale->price) }}</td>
+                                <td>{{ format_amount($sale->balance_due) }}</td>
                                 @if($showPurchasePrice)
                                 <td>{{ $sale->cost_at_sale !== null ? format_amount($sale->cost_at_sale) : '—' }}</td>
                                 @endif

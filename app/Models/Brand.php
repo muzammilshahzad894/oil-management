@@ -15,10 +15,12 @@ class Brand extends Model
         'description',
         'quantity',
         'cost_price',
+        'sale_price',
     ];
 
     protected $casts = [
         'cost_price' => 'decimal:2',
+        'sale_price' => 'decimal:2',
     ];
 
     /**

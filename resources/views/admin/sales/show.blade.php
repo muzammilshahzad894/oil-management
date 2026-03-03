@@ -66,11 +66,14 @@
         </button>
     </div>
     <div class="card-body">
-        <form action="{{ route('admin.sales.payments.store', $sale->id) }}" method="POST" class="row g-3 mb-4 p-3 bg-light rounded" id="addPaymentForm">
+        @if($sale->balance_due <= 0)
+        <p class="text-muted small mb-2"><i class="fas fa-info-circle me-1"></i>This sale is fully paid. Any amount you add below will be added to the customer's wallet.</p>
+        @endif
+        <form action="{{ route('admin.sales.payments.store', $sale->id) }}" method="POST" class="row g-3 mb-4 p-3 bg-light rounded" id="addPaymentForm" data-balance-due="{{ $sale->balance_due }}">
             @csrf
             <div class="col-md-2">
                 <label for="amount" class="form-label">Amount <span class="text-danger">*</span></label>
-                <input type="number" step="any" min="0" class="form-control @error('amount') is-invalid @enderror" id="amount" name="amount" value="{{ old('amount') }}" placeholder="0.00" required>
+                <input type="number" step="any" min="0" class="form-control @error('amount') is-invalid @enderror" id="payment_amount" name="amount" value="{{ old('amount') }}" placeholder="0" required>
                 @error('amount')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-2">
@@ -235,6 +238,60 @@
     $(document).ready(function() {
         const balanceUrl = '{{ url("admin/customers") }}';
         const storeExtraUrl = '{{ url("admin/customers") }}';
+        var _allowOverpaymentSubmit = false;
+
+        $('#addPaymentForm').on('submit', function(e) {
+            if (_allowOverpaymentSubmit) {
+                _allowOverpaymentSubmit = false;
+                return;
+            }
+            const balanceDue = parseFloat($('#addPaymentForm').data('balance-due')) || 0;
+            const amount = parseFloat($('#payment_amount').val()) || 0;
+            function reenableAddPaymentButton() {
+                $('#addPaymentForm button[type="submit"]').prop('disabled', false);
+            }
+            if (balanceDue <= 0 && amount > 0) {
+                e.preventDefault();
+                var msg = 'This sale is already fully paid. The amount of ' + amount + ' will be added to the customer\'s wallet.';
+                Swal.fire({
+                    title: 'Add to customer wallet?',
+                    html: '<p>' + msg + '</p>',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'OK',
+                    cancelButtonText: 'Cancel'
+                }).then(function(r) {
+                    if (r.isConfirmed) {
+                        _allowOverpaymentSubmit = true;
+                        $('#addPaymentForm').submit();
+                    } else {
+                        reenableAddPaymentButton();
+                    }
+                });
+                return false;
+            }
+            if (balanceDue > 0 && amount > balanceDue) {
+                e.preventDefault();
+                const excess = amount - balanceDue;
+                var msg = 'You are adding ' + amount + '. Balance due is ' + balanceDue + '. Extra amount of ' + excess + ' will be added to the customer\'s wallet.';
+                Swal.fire({
+                    title: 'Add extra to wallet?',
+                    html: '<p>' + msg + '</p>',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'OK',
+                    cancelButtonText: 'Cancel'
+                }).then(function(r) {
+                    if (r.isConfirmed) {
+                        _allowOverpaymentSubmit = true;
+                        $('#addPaymentForm').submit();
+                    } else {
+                        reenableAddPaymentButton();
+                    }
+                });
+                return false;
+            }
+        });
 
         $('#btnExtraPaid').on('click', function() {
             const customerId = $(this).data('customer-id');

@@ -8,7 +8,7 @@
                    id="customer_search" 
                    placeholder="Type to search customer..."
                    autocomplete="off"
-                   value="{{ old('customer_name', isset($sale) ? $sale->customer->name : '') }}">
+                   value="{{ session('old_customer_name', old('customer_name', isset($sale) ? $sale->customer->name : '')) }}">
             <input type="hidden" id="customer_id" name="customer_id" value="{{ old('customer_id', $sale->customer_id ?? '') }}" required>
                     <div id="customer_dropdown" class="dropdown-menu w-100" style="display: none;">
                 <div class="text-center p-3">
@@ -30,11 +30,11 @@
                    id="brand_search" 
                    placeholder="Type to search brand..."
                    autocomplete="off"
-                   value="{{ old('brand_name', isset($sale) ? $sale->brand->name : '') }}">
+                   value="{{ session('old_brand_name', old('brand_name', isset($sale) ? $sale->brand->name : '')) }}">
             <input type="hidden" id="brand_id" name="brand_id" value="{{ old('brand_id', $sale->brand_id ?? '') }}" required>
                     <div id="brand_dropdown" class="dropdown-menu w-100" style="display: none;">
                 @foreach($brands as $brand)
-                    <a class="dropdown-item brand-option" href="#" data-id="{{ $brand->id }}" data-stock="{{ $brand->quantity ?? 0 }}">
+                    <a class="dropdown-item brand-option" href="#" data-id="{{ $brand->id }}" data-stock="{{ $brand->quantity ?? 0 }}" data-sale-price="{{ $brand->sale_price ?? '' }}">
                         {{ $brand->name }} (Stock: {{ $brand->quantity ?? 0 }})
                     </a>
                 @endforeach
@@ -70,37 +70,40 @@
     </div>
 </div>
 @if(!isset($sale))
+<div class="card bg-light border-0 mb-3" id="extraPaidOfferCard" style="display: none;">
+    <div class="card-body py-3">
+        <p class="mb-2 small" id="extraPaidOfferText"></p>
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="use_extra_paid_checkbox" name="use_extra_paid" value="1" {{ old('use_extra_paid') ? 'checked' : '' }}>
+            <label class="form-check-label" for="use_extra_paid_checkbox">Use this extra paid amount in this sale</label>
+        </div>
+        <div id="extraPaidBreakdown" class="small text-muted mb-0" style="display: none;"></div>
+        <input type="hidden" name="initial_extra_paid_amount" id="initial_extra_paid_amount" value="{{ old('initial_extra_paid_amount', '0') }}">
+    </div>
+</div>
 <div class="card bg-light border-0 mb-3">
     <div class="card-body py-3">
         <h6 class="text-muted mb-2"><i class="fas fa-money-bill-wave me-1"></i> Payment received now (optional)</h6>
-        <p class="small text-muted mb-3">If the customer pays something today, enter it below. You can use extra paid balance or add more payments later from the sale details page. Leave at 0 if unpaid.</p>
+        <p class="small text-muted mb-3">Enter amount received. You can enter more than the sale total; the excess will be added to the customer's extra paid balance for future use.</p>
         <div class="row align-items-end">
-            <div class="col-md-3 mb-2 mb-md-0">
+            <div class="col-md-4 mb-2 mb-md-0">
                 <label for="initial_payment" class="form-label">Amount received now</label>
-                <input type="number" step="any" min="0" class="form-control @error('initial_payment') is-invalid @enderror" id="initial_payment" name="initial_payment" value="{{ old('initial_payment', '0') }}" placeholder="0.00">
+                <input type="number" step="any" min="0" class="form-control @error('initial_payment') is-invalid @enderror" id="initial_payment" name="initial_payment" value="{{ old('initial_payment', '') }}" placeholder="0">
                 @error('initial_payment')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
-            <div class="col-md-2 mb-2 mb-md-0">
+            <div class="col-md-3 mb-2 mb-md-0">
                 <label for="initial_payment_date" class="form-label">Date</label>
                 <input type="date" class="form-control" id="initial_payment_date" name="initial_payment_date" value="{{ old('initial_payment_date', date('Y-m-d')) }}">
             </div>
-            <div class="col-md-2 mb-2 mb-md-0">
+            <div class="col-md-3 mb-2 mb-md-0">
                 <label for="initial_payment_method" class="form-label">Method</label>
                 <select class="form-select" id="initial_payment_method" name="initial_payment_method">
                     @foreach(\App\Models\Payment::methods() as $value => $label)
                         <option value="{{ $value }}" {{ old('initial_payment_method', 'cash') == $value ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
-            </div>
-            <div class="col-md-3 mb-2 mb-md-0" id="extraPaidBlock" style="display: none;">
-                <label class="form-label d-block">&nbsp;</label>
-                <button type="button" class="btn btn-outline-success" id="btnGetFromExtraPaidCreate" title="Get from extra paid">
-                    <i class="fas fa-wallet me-1"></i>Get from extra paid
-                </button>
-                <input type="hidden" name="initial_extra_paid_amount" id="initial_extra_paid_amount" value="{{ old('initial_extra_paid_amount', '0') }}">
-                <span id="extraPaidSummary" class="small text-success ms-2" style="display: none;"></span>
             </div>
         </div>
     </div>

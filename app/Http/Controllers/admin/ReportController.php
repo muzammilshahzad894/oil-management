@@ -86,15 +86,15 @@ class ReportController extends Controller
             ->whereBetween('sale_date', [$startDate, $endDate])
             ->get();
 
-        $saleIds = $sales->pluck('id')->toArray();
-        $totalInvoiced = $sales->sum('price');
-        $totalReceived = (float) Payment::whereIn('sale_id', $saleIds)->sum('amount');
-        $totalCost = $sales->sum(fn($s) => $s->total_cost ?? 0);
-        $totalProfit = $totalReceived - (float) $totalCost;
+        $totalInvoiced = $sales->sum('price'); // Selling price (total invoiced)
+        $totalCost = $sales->sum(fn($s) => $s->total_cost ?? 0); // Purchase price (total cost)
+        $profitOnSales = $totalInvoiced - (float) $totalCost; // Profit = Selling - Purchase (not based on actual received)
+        $totalReceived = (float) Payment::whereIn('sale_id', $sales->pluck('id')->toArray())->sum('amount');
+        $pendingAmount = $totalInvoiced - $totalReceived; // Pending from customers
 
         return view('admin.reports.profit-loss', compact(
             'sales', 'startDate', 'endDate',
-            'totalInvoiced', 'totalReceived', 'totalCost', 'totalProfit'
+            'totalInvoiced', 'totalReceived', 'totalCost', 'profitOnSales', 'pendingAmount'
         ));
     }
     
@@ -137,45 +137,39 @@ class ReportController extends Controller
             fputcsv($file, ['Customer Report - ' . ($customer ? $customer->name : 'All Customers')]);
             fputcsv($file, ['Generated on: ' . date('Y-m-d H:i:s')]);
             fputcsv($file, []);
-            fputcsv($file, ['Date', 'Customer', 'Brand', 'Quantity', 'Price', 'Cost', 'Profit', 'Payment Status']);
+            fputcsv($file, ['Date', 'Customer', 'Brand', 'Quantity', 'Total Amount', 'Pending Amount', 'Payment Status']);
             $totalPaid = 0;
             $totalUnpaid = 0;
+            $pendingPaid = 0;
+            $pendingUnpaid = 0;
             $qtyPaid = 0;
             $qtyUnpaid = 0;
-            $totalCost = 0;
-            $totalProfit = 0;
             foreach ($sales as $sale) {
-                $cost = $sale->cost_at_sale ?? '';
-                $profit = $sale->profit !== null ? $sale->profit : '';
+                $balanceDue = max(0, (float) $sale->price - $sale->total_paid);
                 fputcsv($file, [
                     $sale->sale_date->format('Y-m-d'),
                     $sale->customer->name,
                     $sale->brand->name,
                     $sale->quantity,
                     $sale->price,
-                    $cost,
-                    $profit,
-                    $sale->is_paid ? 'Paid' : 'Unpaid'
+                    $balanceDue,
+                    $sale->total_paid >= (float) $sale->price ? 'Paid' : ($sale->total_paid > 0 ? 'Partial' : 'Unpaid')
                 ]);
-                if ($sale->is_paid) {
+                if ($sale->total_paid >= (float) $sale->price) {
                     $totalPaid += $sale->price;
                     $qtyPaid += $sale->quantity;
                 } else {
                     $totalUnpaid += $sale->price;
+                    $pendingUnpaid += $balanceDue;
                     $qtyUnpaid += $sale->quantity;
                 }
-                if ($sale->cost_at_sale !== null) {
-                    $totalCost += $sale->total_cost;
-                    $totalProfit += $sale->profit;
-                }
             }
+            $totalSalesAmount = $totalPaid + $totalUnpaid;
+            $totalPending = $pendingUnpaid;
+            $totalSalesCount = $sales->count();
             fputcsv($file, []);
-            fputcsv($file, ['Total Paid', '', '', $qtyPaid, $totalPaid, '', '', $sales->where('is_paid', true)->count() . ' sales']);
-            fputcsv($file, ['Total Unpaid', '', '', $qtyUnpaid, $totalUnpaid, '', '', $sales->where('is_paid', false)->count() . ' sales']);
-            if ($totalCost > 0) {
-                fputcsv($file, ['Total Cost', '', '', '', $totalCost, '', '', '']);
-                fputcsv($file, ['Total Profit', '', '', '', $totalProfit, '', '', '']);
-            }
+            fputcsv($file, ['Total Paid', $totalPaid, '', '', '', '', '']);
+            fputcsv($file, ['Total Unpaid', $totalUnpaid, '', '', '', '']);
             fclose($file);
         };
         

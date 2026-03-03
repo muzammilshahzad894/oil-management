@@ -28,11 +28,13 @@ class OilManagementSeeder extends Seeder
         $createdBrands = [];
         foreach ($brandsData as $data) {
             $costPrice = rand(20, 80) + (rand(0, 99) / 100);
+            $salePrice = round($costPrice * (1 + (rand(5, 25) / 100)), 2);
             $createdBrands[] = Brand::create([
                 'name' => $data['name'],
                 'description' => $data['description'],
                 'quantity' => rand(50, 500),
                 'cost_price' => $costPrice,
+                'sale_price' => $salePrice,
             ]);
         }
 

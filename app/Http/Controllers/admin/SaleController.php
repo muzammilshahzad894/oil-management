@@ -82,46 +82,32 @@ class SaleController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        $price = (float) $request->price;
         $initialExtraPaid = (float) ($request->input('initial_extra_paid_amount') ?? 0);
         if ($initialExtraPaid > 0) {
             $extraBalance = CustomerExtraPayment::balanceForCustomer($request->customer_id);
             if ($initialExtraPaid > $extraBalance) {
-                return redirect()->back()
-                    ->withInput()
+                return $this->backWithBrand($request)
                     ->with('error', 'Extra paid amount exceeds customer balance (' . format_amount($extraBalance) . ').');
             }
-            if ($initialExtraPaid > (float) $request->price) {
-                return redirect()->back()
-                    ->withInput()
+            if ($initialExtraPaid > $price) {
+                return $this->backWithBrand($request)
                     ->with('error', 'Extra paid amount cannot exceed sale amount.');
             }
-        }
-        $initialAmount = (float) ($request->input('initial_payment') ?? 0);
-        if ($initialAmount + $initialExtraPaid > (float) $request->price) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Total initial payment (cash + extra paid) cannot exceed sale amount.');
         }
 
         DB::beginTransaction();
         try {
             $brand = Brand::find($request->brand_id);
             if (!$brand) {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Brand not found.');
+                return $this->backWithBrand($request)->with('error', 'Brand not found.');
             }
             if (($brand->quantity ?? 0) < $request->quantity) {
-                return redirect()->back()
-                    ->withInput()
+                return $this->backWithBrand($request)
                     ->with('error', 'Insufficient stock. Available: ' . ($brand->quantity ?? 0));
             }
 
-            $costAtSale = null;
-            if ($brand->cost_price !== null) {
-                $costAtSale = (float) $brand->cost_price;
-            }
-
+            $costAtSale = $brand->cost_price !== null ? (float) $brand->cost_price : null;
             $saleData = $request->only(['customer_id', 'brand_id', 'quantity', 'price', 'sale_date', 'notes']);
             $saleData['cost_at_sale'] = $costAtSale;
             $saleData['is_paid'] = false;
@@ -130,27 +116,25 @@ class SaleController extends Controller
             $brand->removeStock($request->quantity);
 
             $initialAmount = (float) ($request->input('initial_payment') ?? 0);
-            if ($initialAmount > 0) {
-                if ($initialAmount > (float) $sale->price) {
-                    return redirect()->back()
-                        ->withInput()
-                        ->with('error', 'Initial payment cannot exceed the sale amount (' . number_format((float) $sale->price, 2) . ').');
-                }
+            $amountFromExtra = $initialExtraPaid;
+            $amountFromCash = min($initialAmount, max(0, $price - $amountFromExtra));
+            $excessToExtraPaid = $initialAmount - $amountFromCash;
+
+            if ($amountFromCash > 0) {
                 Payment::create([
                     'sale_id' => $sale->id,
-                    'amount' => $initialAmount,
+                    'amount' => $amountFromCash,
                     'payment_date' => $request->input('initial_payment_date') ?: $request->sale_date,
                     'method' => $request->input('initial_payment_method') ?: Payment::METHOD_CASH,
                     'reference' => null,
                     'notes' => 'Initial payment',
                 ]);
-                $sale->refreshIsPaid();
             }
 
-            if ($initialExtraPaid > 0) {
+            if ($amountFromExtra > 0) {
                 $payment = Payment::create([
                     'sale_id' => $sale->id,
-                    'amount' => $initialExtraPaid,
+                    'amount' => $amountFromExtra,
                     'payment_date' => $request->input('initial_payment_date') ?: $request->sale_date,
                     'method' => Payment::METHOD_EXTRA_PAID,
                     'reference' => null,
@@ -158,14 +142,24 @@ class SaleController extends Controller
                 ]);
                 CustomerExtraPayment::create([
                     'customer_id' => $sale->customer_id,
-                    'amount' => -$initialExtraPaid,
+                    'amount' => -$amountFromExtra,
                     'sale_id' => $sale->id,
                     'payment_id' => $payment->id,
                     'note' => 'Used for Sale #' . $sale->id,
                 ]);
-                $sale->refreshIsPaid();
             }
 
+            if ($excessToExtraPaid > 0) {
+                CustomerExtraPayment::create([
+                    'customer_id' => $sale->customer_id,
+                    'amount' => $excessToExtraPaid,
+                    'sale_id' => $sale->id,
+                    'payment_id' => null,
+                    'note' => 'Overpayment on Sale #' . $sale->id,
+                ]);
+            }
+
+            $sale->refreshIsPaid();
             DB::commit();
 
             if ($request->input('action') === 'save_and_print') {
@@ -177,10 +171,18 @@ class SaleController extends Controller
                 ->with('success', 'Sale created successfully. Add payments from this page or later.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Error recording sale: ' . $e->getMessage());
+            return $this->backWithBrand($request)->with('error', 'Error recording sale: ' . $e->getMessage());
         }
+    }
+
+    /** Redirect back with input and old brand/customer names (for validation error restore). */
+    private function backWithBrand(Request $request)
+    {
+        $brandName = $request->brand_id ? (Brand::find($request->brand_id)?->name) : null;
+        $customerName = $request->customer_id ? (Customer::find($request->customer_id)?->name) : null;
+        return redirect()->back()->withInput()
+            ->with('old_brand_name', $brandName)
+            ->with('old_customer_name', $customerName);
     }
 
     /**
@@ -291,44 +293,64 @@ class SaleController extends Controller
 
     /**
      * Store a payment for a sale (from sale details page).
+     * If sale is fully paid, the full amount goes to customer's extra paid (wallet).
+     * If amount exceeds balance due, only balance_due is applied to the sale; the rest goes to wallet.
      */
     public function storePayment(Request $request, string $id)
     {
         $sale = Sale::findOrFail($id);
-        $maxAllowed = max(0, (float) $sale->price - $sale->total_paid);
-
-        if ($maxAllowed <= 0) {
-            return redirect()->back()
-                ->withInput()
-                ->withErrors(['amount' => 'This sale is already fully paid.']);
-        }
+        $balanceDue = max(0, (float) $sale->price - $sale->total_paid);
 
         $request->validate([
-            'amount' => ['required', 'numeric', 'min:0.01', 'max:' . $maxAllowed],
+            'amount' => ['required', 'numeric', 'min:0.01'],
             'payment_date' => 'required|date',
             'method' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
-        ], [
-            'amount.max' => 'Payment cannot exceed the balance due (' . number_format($maxAllowed, 2) . ').',
         ]);
 
-        if ($request->amount > $maxAllowed) {
-            return redirect()->back()
-                ->withInput()
-                ->withErrors(['amount' => 'Payment cannot exceed the balance due (' . number_format($maxAllowed, 2) . ').']);
+        $amount = (float) $request->amount;
+
+        if ($balanceDue <= 0) {
+            // Sale already fully paid: add full amount to customer's wallet
+            CustomerExtraPayment::create([
+                'customer_id' => $sale->customer_id,
+                'amount' => $amount,
+                'sale_id' => $sale->id,
+                'payment_id' => null,
+                'note' => 'Added from Sale #' . $sale->id . ' (sale already fully paid)',
+            ]);
+            return redirect()->route('admin.sales.show', $sale->id)
+                ->with('success', 'Sale is already fully paid. ' . format_amount($amount) . ' has been added to the customer\'s wallet.');
         }
+
+        $amountAppliedToSale = min($amount, $balanceDue);
+        $excessToWallet = $amount - $amountAppliedToSale;
 
         Payment::create([
             'sale_id' => $sale->id,
-            'amount' => $request->amount,
+            'amount' => $amountAppliedToSale,
             'payment_date' => $request->payment_date,
             'method' => $request->input('method') ?: Payment::METHOD_CASH,
             'notes' => $request->notes,
         ]);
         $sale->refreshIsPaid();
 
+        if ($excessToWallet > 0) {
+            CustomerExtraPayment::create([
+                'customer_id' => $sale->customer_id,
+                'amount' => $excessToWallet,
+                'sale_id' => $sale->id,
+                'payment_id' => null,
+                'note' => 'Overpayment on Sale #' . $sale->id,
+            ]);
+        }
+
+        $msg = $excessToWallet > 0
+            ? 'Payment of ' . format_amount($amountAppliedToSale) . ' added. ' . format_amount($excessToWallet) . ' added to customer wallet.'
+            : 'Payment added successfully.';
+
         return redirect()->route('admin.sales.show', $sale->id)
-            ->with('success', 'Payment added successfully.');
+            ->with('success', $msg);
     }
 
     /**

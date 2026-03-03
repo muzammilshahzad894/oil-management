@@ -108,11 +108,23 @@
             }
         })();
         
+        function updateAmountFromBrandAndQuantity() {
+            const brandId = $brandId.val();
+            if (!brandId) return;
+            const brand = allBrands.find(function(b) { return b.id == brandId; });
+            if (!brand) return;
+            const qty = parseInt($('#quantity').val(), 10) || 0;
+            const salePrice = parseFloat(brand.sale_price) || 0;
+            const calculated = qty * salePrice;
+            $('#price').val(calculated > 0 ? calculated : '');
+        }
+
         function showAllBrands() {
             let html = '';
             $.each(allBrands, function(index, brand) {
                 const stock = brand.quantity ?? 0;
-                html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '" data-stock="' + stock + '">' +
+                const salePrice = brand.sale_price != null ? brand.sale_price : '';
+                html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '" data-stock="' + stock + '" data-sale-price="' + salePrice + '">' +
                     brand.name + ' (Stock: ' + stock + ')' +
                     '</a>';
             });
@@ -138,7 +150,8 @@
                         let html = '';
                         $.each(filtered, function(index, brand) {
                             const stock = brand.quantity ?? 0;
-                            html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '" data-stock="' + stock + '">' +
+                            const salePrice = brand.sale_price != null ? brand.sale_price : '';
+                            html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '" data-stock="' + stock + '" data-sale-price="' + salePrice + '">' +
                                 brand.name + ' (Stock: ' + stock + ')' +
                                 '</a>';
                         });
@@ -167,6 +180,13 @@
                 $stockInfo.html('<i class="fas fa-box me-2"></i>Available stock: <span class="stock-number">' + stock + '</span>').show();
                 $stockInfo.removeClass('stock-info-low stock-info-ok').addClass(parseInt(stock) < 10 ? 'stock-info-low' : 'stock-info-ok');
             }
+            // Calculate amount from sale price × quantity (admin can still edit amount)
+            updateAmountFromBrandAndQuantity();
+        });
+
+        // When quantity changes, recalculate amount if a brand is selected
+        $('#quantity').on('input', function() {
+            updateAmountFromBrandAndQuantity();
         });
         
         $(document).on('click', function(e) {
