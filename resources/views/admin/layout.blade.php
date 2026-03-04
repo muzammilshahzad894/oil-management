@@ -771,56 +771,73 @@
     
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo">
-                <i class="fas fa-oil-can"></i>
+        @if(request()->routeIs('admin.ledger.*'))
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i class="fas fa-book"></i>
+                </div>
+                <h4 class="sidebar-title">Ledger</h4>
             </div>
-            <h4 class="sidebar-title">Oil Management</h4>
-        </div>
-        <ul class="sidebar-menu">
-            <li>
-                <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('admin.brands.index') }}" class="{{ request()->routeIs('admin.brands.*') ? 'active' : '' }}">
-                    <i class="fas fa-tags"></i>
-                    <span>Brands &amp; Inventory</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('admin.customers.index') }}" class="{{ request()->routeIs('admin.customers.*') ? 'active' : '' }}">
-                    <i class="fas fa-users"></i>
-                    <span>Customers</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('admin.sales.index') }}" class="{{ request()->routeIs('admin.sales.*') ? 'active' : '' }}">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span>Sales</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('admin.reports.customer') }}" class="{{ request()->routeIs('admin.reports.customer*') ? 'active' : '' }}">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Customer Report</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('admin.reports.profit-loss') }}" class="{{ request()->routeIs('admin.reports.profit-loss') ? 'active' : '' }}">
-                    <i class="fas fa-chart-pie"></i>
-                    <span>Profit &amp; Loss</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
-            </li>
-        </ul>
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{{ route('admin.ledger.customers.index') }}" class="{{ request()->routeIs('admin.ledger.customers.*') ? 'active' : '' }}">
+                        <i class="fas fa-list"></i>
+                        <span>Customers</span>
+                    </a>
+                </li>
+            </ul>
+        @else
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i class="fas fa-oil-can"></i>
+                </div>
+                <h4 class="sidebar-title">Oil Management</h4>
+            </div>
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.brands.index') }}" class="{{ request()->routeIs('admin.brands.*') ? 'active' : '' }}">
+                        <i class="fas fa-tags"></i>
+                        <span>Brands &amp; Inventory</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.customers.index') }}" class="{{ request()->routeIs('admin.customers.*') ? 'active' : '' }}">
+                        <i class="fas fa-users"></i>
+                        <span>Customers</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.sales.index') }}" class="{{ request()->routeIs('admin.sales.*') ? 'active' : '' }}">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Sales</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.reports.customer') }}" class="{{ request()->routeIs('admin.reports.customer*') ? 'active' : '' }}">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Customer Report</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.reports.profit-loss') }}" class="{{ request()->routeIs('admin.reports.profit-loss') ? 'active' : '' }}">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Profit &amp; Loss</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+        @endif
     </div>
     
     <!-- Main Wrapper -->
@@ -847,6 +864,19 @@
                         <i class="fas fa-chevron-down ms-2"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
+                                <i class="fas fa-oil-can"></i>
+                                <span>Oil Management</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ route('admin.ledger.customers.index') }}">
+                                <i class="fas fa-book"></i>
+                                <span>Ledger</span>
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item" href="{{ route('admin.profile.edit') }}">
                                 <i class="fas fa-user"></i>

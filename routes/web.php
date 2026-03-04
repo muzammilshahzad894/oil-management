@@ -10,6 +10,7 @@ use App\Http\Controllers\admin\ProfileController;
 use App\Http\Controllers\admin\ReportController;
 use App\Http\Controllers\admin\SettingsController;
 use App\Http\Controllers\admin\ExtraPaidController;
+use App\Http\Controllers\admin\LedgerCustomerController;
 use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', function () {
@@ -93,6 +94,22 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/reports/customer', [ReportController::class, 'customer'])->name('admin.reports.customer');
     Route::get('/admin/reports/customer/export', [ReportController::class, 'exportExcel'])->name('admin.reports.customer.export');
     Route::get('/admin/reports/profit-loss', [ReportController::class, 'profitLoss'])->name('admin.reports.profit-loss');
+
+    // Ledger (digital khatam)
+    Route::prefix('admin/ledger')->name('admin.ledger.')->group(function () {
+        Route::post('customers/{customer}/transactions', [LedgerCustomerController::class, 'storeTransaction'])->name('customers.transactions.store');
+        Route::put('customers/{customer}/transactions/{transaction}', [LedgerCustomerController::class, 'updateTransaction'])->name('customers.transactions.update');
+        Route::delete('customers/{customer}/transactions/{transaction}', [LedgerCustomerController::class, 'destroyTransaction'])->name('customers.transactions.destroy');
+        Route::resource('customers', LedgerCustomerController::class)->names([
+            'index' => 'customers.index',
+            'create' => 'customers.create',
+            'store' => 'customers.store',
+            'show' => 'customers.show',
+            'edit' => 'customers.edit',
+            'update' => 'customers.update',
+            'destroy' => 'customers.destroy',
+        ]);
+    });
 });
 
 // migrate fresh commands
