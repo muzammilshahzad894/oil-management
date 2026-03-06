@@ -11,7 +11,7 @@ class LedgerTransaction extends Model
 
     protected $casts = [
         'amount' => 'decimal:2',
-        'transaction_date' => 'date',
+        'transaction_date' => 'datetime',
     ];
 
     public const TYPE_RECEIVED = 'received';

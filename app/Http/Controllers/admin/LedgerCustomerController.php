@@ -17,6 +17,7 @@ class LedgerCustomerController extends Controller
             ->withSum(['transactions as total_gave_sum' => function ($q) {
                 $q->where('type', 'gave');
             }], 'amount')
+            ->withMax('transactions as last_transaction_at', 'transaction_date')
             ->orderBy('name');
         if ($request->filled('search')) {
             $s = $request->search;
@@ -27,7 +28,15 @@ class LedgerCustomerController extends Controller
             });
         }
         $customers = $query->paginate(15)->withQueryString();
-        return view('admin.ledger.customers.index', compact('customers'));
+
+        $allForTotals = LedgerCustomer::withSum(['transactions as total_received_sum' => fn($q) => $q->where('type', 'received')], 'amount')
+            ->withSum(['transactions as total_gave_sum' => fn($q) => $q->where('type', 'gave')], 'amount')
+            ->get();
+        $overallYouWillGive = $allForTotals->sum(fn($c) => max(0, (float)($c->total_received_sum ?? 0) - (float)($c->total_gave_sum ?? 0)));
+        $overallYouWillGet = $allForTotals->sum(fn($c) => max(0, (float)($c->total_gave_sum ?? 0) - (float)($c->total_received_sum ?? 0)));
+
+        $totalCustomers = $customers->total();
+        return view('admin.ledger.customers.index', compact('customers', 'overallYouWillGive', 'overallYouWillGet', 'totalCustomers'));
     }
 
     public function create()
@@ -49,7 +58,26 @@ class LedgerCustomerController extends Controller
 
     public function show(Request $request, LedgerCustomer $customer)
     {
-        $transactions = $customer->transactions()->orderBy('transaction_date', 'desc')->orderBy('id', 'desc')->paginate(15, ['*'], 'tx_page');
+        $txQuery = $customer->transactions()->orderBy('transaction_date', 'desc')->orderBy('id', 'desc');
+        if ($request->filled('history_search')) {
+            $term = $request->history_search;
+            $txQuery->where(function ($q) use ($term) {
+                $q->where('description', 'like', '%' . $term . '%')
+                    ->orWhereRaw('CONVERT(amount, CHAR) LIKE ?', ['%' . $term . '%']);
+            });
+        }
+        $transactions = $txQuery->paginate(15, ['*'], 'tx_page')->withQueryString();
+        $runningBalance = (float) $customer->balance;
+        $withBalance = !$request->filled('history_search');
+        $transactionsWithBalance = $transactions->getCollection()->map(function ($tx) use (&$runningBalance, $withBalance) {
+            $balanceAfter = $withBalance ? $runningBalance : null;
+            if ($withBalance) {
+                $runningBalance -= $tx->type === 'received' ? (float) $tx->amount : -(float) $tx->amount;
+            }
+            return (object) ['tx' => $tx, 'balance_after' => $balanceAfter];
+        });
+        $transactions->setCollection($transactionsWithBalance);
+
         if ($request->ajax()) {
             return view('admin.ledger.customers.partials.history', compact('customer', 'transactions'));
         }
@@ -86,21 +114,24 @@ class LedgerCustomerController extends Controller
             'type' => 'required|in:received,gave',
             'amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string|max:500',
-            'transaction_date' => 'required|date',
+            'transaction_date' => 'nullable|date',
         ]);
+        $txDate = $request->filled('transaction_date')
+            ? $request->transaction_date
+            : now()->format('Y-m-d H:i:s');
         $tx = LedgerTransaction::create([
             'ledger_customer_id' => $customer->id,
             'type' => $request->type,
             'amount' => $request->amount,
             'description' => $request->description,
-            'transaction_date' => $request->transaction_date,
+            'transaction_date' => $txDate,
         ]);
         if ($request->wantsJson() || $request->ajax()) {
             $customer->load('transactions');
             return response()->json([
                 'success' => true,
                 'message' => ($request->type === 'received' ? 'You got' : 'You gave') . ' ' . format_amount($request->amount) . ' recorded.',
-                'transaction' => ['id' => $tx->id, 'type' => $tx->type, 'amount' => (float) $tx->amount, 'description' => $tx->description, 'transaction_date' => $tx->transaction_date->format('Y-m-d')],
+                'transaction' => ['id' => $tx->id, 'type' => $tx->type, 'amount' => (float) $tx->amount, 'description' => $tx->description, 'transaction_date' => $tx->transaction_date->format('Y-m-d H:i')],
                 'totals' => ['total_received' => $customer->total_received, 'total_gave' => $customer->total_gave, 'balance' => $customer->balance],
             ]);
         }
@@ -116,14 +147,18 @@ class LedgerCustomerController extends Controller
         $request->validate([
             'amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string|max:500',
-            'transaction_date' => 'required|date',
+            'transaction_date' => 'nullable|date',
         ]);
-        $transaction->update($request->only(['amount', 'description', 'transaction_date']));
+        $updateData = $request->only(['amount', 'description']);
+        if ($request->filled('transaction_date')) {
+            $updateData['transaction_date'] = $request->transaction_date;
+        }
+        $transaction->update($updateData);
         $customer->load('transactions');
         return response()->json([
             'success' => true,
             'message' => 'Entry updated.',
-            'transaction' => ['id' => $transaction->id, 'type' => $transaction->type, 'amount' => (float) $transaction->amount, 'description' => $transaction->description, 'transaction_date' => $transaction->transaction_date->format('Y-m-d')],
+            'transaction' => ['id' => $transaction->id, 'type' => $transaction->type, 'amount' => (float) $transaction->amount, 'description' => $transaction->description, 'transaction_date' => $transaction->transaction_date->format('Y-m-d H:i')],
             'totals' => ['total_received' => $customer->total_received, 'total_gave' => $customer->total_gave, 'balance' => $customer->balance],
         ]);
     }

@@ -14,6 +14,20 @@ class LedgerCustomer extends Model
         return $this->hasMany(LedgerTransaction::class)->orderBy('transaction_date', 'desc')->orderBy('id', 'desc');
     }
 
+    /** Amount you will give to this customer (positive balance = we owe them). */
+    public function getYouWillGiveAttribute(): float
+    {
+        $b = $this->balance;
+        return $b > 0 ? (float) $b : 0;
+    }
+
+    /** Amount you will get from this customer (negative balance = they owe us). */
+    public function getYouWillGetAttribute(): float
+    {
+        $b = $this->balance;
+        return $b < 0 ? (float) abs($b) : 0;
+    }
+
     /** Total amount you received from this customer (they gave you). */
     public function getTotalReceivedAttribute(): float
     {
