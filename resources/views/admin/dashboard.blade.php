@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="row mb-4">
-    <div class="col-lg-4 col-md-6 mb-4">
+    <div class="col-lg-3 col-md-6 mb-4">
         <div class="stat-card">
             <div class="stat-icon">
                 <i class="fas fa-shopping-cart"></i>
@@ -13,22 +13,31 @@
             <div class="stat-label">Today's Sales</div>
         </div>
     </div>
-    <div class="col-lg-4 col-md-6 mb-4">
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-coins"></i>
+            </div>
+            <div class="stat-value">{{ format_amount($todayProfit) }}</div>
+            <div class="stat-label">Today's Profit</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-bar"></i>
+            </div>
+            <div class="stat-value">{{ format_amount($monthlySale) }}</div>
+            <div class="stat-label">Monthly Sale</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
         <div class="stat-card">
             <div class="stat-icon">
                 <i class="fas fa-chart-line"></i>
             </div>
             <div class="stat-value">{{ format_amount($monthlyProfit) }}</div>
             <div class="stat-label">Monthly Profit</div>
-        </div>
-    </div>
-    <div class="col-lg-4 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-users"></i>
-            </div>
-            <div class="stat-value">{{ $totalCustomers }}</div>
-            <div class="stat-label">Total Customers</div>
         </div>
     </div>
 </div>

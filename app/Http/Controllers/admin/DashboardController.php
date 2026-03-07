@@ -4,7 +4,6 @@ namespace App\Http\Controllers\admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
-use App\Models\Customer;
 use App\Models\Sale;
 use Carbon\Carbon;
 
@@ -12,18 +11,19 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $totalCustomers = Customer::count();
+        // Today: sales and profit
+        $todaySalesCollection = Sale::whereDate('sale_date', Carbon::today())->get();
+        $todaySales = $todaySalesCollection->sum('price');
+        $todayCost = $todaySalesCollection->sum(fn($s) => $s->total_cost ?? 0);
+        $todayProfit = $todaySales - (float) $todayCost;
 
-        // Today's Sales: total invoiced (sum of price) for sales where sale_date is today
-        $todaySales = Sale::whereDate('sale_date', Carbon::today())->sum('price');
-
-        // Monthly Profit: same logic as profitLoss - sales for current month, profit = totalInvoiced - totalCost
+        // Current month: sales and profit
         $monthStart = Carbon::now()->startOfMonth()->format('Y-m-d');
         $monthEnd = Carbon::now()->format('Y-m-d');
-        $monthlySales = Sale::whereBetween('sale_date', [$monthStart, $monthEnd])->get();
-        $totalInvoiced = $monthlySales->sum('price');
-        $totalCost = $monthlySales->sum(fn($s) => $s->total_cost ?? 0);
-        $monthlyProfit = $totalInvoiced - (float) $totalCost;
+        $monthlySalesCollection = Sale::whereBetween('sale_date', [$monthStart, $monthEnd])->get();
+        $monthlySale = $monthlySalesCollection->sum('price');
+        $monthlyCost = $monthlySalesCollection->sum(fn($s) => $s->total_cost ?? 0);
+        $monthlyProfit = $monthlySale - (float) $monthlyCost;
 
         $recentSales = Sale::with([
             'customer' => function($q) {
@@ -44,8 +44,9 @@ class DashboardController extends Controller
 
         return view('admin.dashboard', compact(
             'todaySales',
+            'todayProfit',
+            'monthlySale',
             'monthlyProfit',
-            'totalCustomers',
             'recentSales',
             'lowStock'
         ));

@@ -99,7 +99,7 @@
                             <th>Quantity</th>
                             <th>Price</th>
                             @if($showPurchasePrice ?? true)
-                            <th>Cost (FIFO)</th>
+                            <th>Cost per unit</th>
                             @endif
                         </tr>
                     </thead>
@@ -109,9 +109,13 @@
                                 <td>{{ $sale->sale_date->format('M d, Y') }}</td>
                                 <td>{{ $sale->customer->name }}</td>
                                 <td><span class="badge bg-primary">{{ $sale->quantity }}</span></td>
-                                <td>{{ $sale->price ?? 'N/A' }}</td>
+                                <td>
+                                    {{ $sale->price ? format_amount($sale->price) : '—' }}
+                                </td>
                                 @if($showPurchasePrice ?? true)
-                                <td>{{ $sale->cost_at_sale !== null ? format_amount($sale->cost_at_sale) : '—' }}</td>
+                                <td>
+                                    {{ $sale->cost_at_sale ? format_amount($sale->cost_at_sale) : '—' }}
+                                </td>
                                 @endif
                             </tr>
                         @endforeach
