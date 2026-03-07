@@ -7,11 +7,13 @@
                     <th>Phone</th>
                     <th>Email</th>
                     <th>Total Purchases</th>
+                    <th>Extra paid</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($customers as $customer)
+                    @php $extraPaid = (float) ($customer->extra_payments_sum_amount ?? 0); @endphp
                     <tr>
                         <td><strong>{{ $customer->name }}</strong></td>
                         <td>{{ $customer->phone ?? 'N/A' }}</td>
@@ -19,15 +21,15 @@
                         <td>
                             <span class="badge bg-primary">{{ $customer->sales_count }} sales</span>
                         </td>
+                        <td>{{ $extraPaid != 0 ? format_amount($extraPaid) : '—' }}</td>
                         <td>
                             <a href="{{ route('admin.sales.create', ['customer_id' => $customer->id]) }}" class="btn btn-sm btn-success">New Sale</a>
                             <a href="{{ route('admin.customers.show', $customer->id) }}" class="btn btn-sm btn-info">History</a>
-                            <button type="button" class="btn btn-sm btn-outline-secondary btn-extra-paid" data-customer-id="{{ $customer->id }}" data-customer-name="{{ addslashes($customer->name) }}">Extra paid</button>
                             <a href="{{ route('admin.customers.edit', $customer->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ $customer->id }}, '{{ addslashes($customer->name) }}')">Delete</button>
-                            <form id="delete-form-{{ $customer->id }}" action="{{ route('admin.customers.destroy', $customer->id) }}" method="POST" style="display: none;">
+                            <form action="{{ route('admin.customers.destroy', $customer->id) }}" method="POST" class="d-inline js-confirm-delete" data-confirm-title="Delete this customer?" data-confirm-text="This cannot be undone.">
                                 @csrf
                                 @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                             </form>
                         </td>
                     </tr>

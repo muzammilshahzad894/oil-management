@@ -46,6 +46,13 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/admin/profile/password', [ProfileController::class, 'updatePassword'])->name('admin.profile.password.update');
     
     // Brands
+    Route::get('/admin/brands/{brand}/stock/create', [BrandController::class, 'stockCreate'])->name('admin.brands.stock.create');
+    Route::post('/admin/brands/{brand}/stock', [BrandController::class, 'stockStore'])->name('admin.brands.stock.store');
+    Route::get('/admin/brands/{brand}/stock/archived', [BrandController::class, 'stockArchived'])->name('admin.brands.stock.archived');
+    Route::post('/admin/brands/{brand}/stock/{batch}/restore', [BrandController::class, 'stockRestore'])->name('admin.brands.stock.restore');
+    Route::get('/admin/brands/{brand}/stock/{batch}/edit', [BrandController::class, 'stockEdit'])->name('admin.brands.stock.edit');
+    Route::put('/admin/brands/{brand}/stock/{batch}', [BrandController::class, 'stockUpdate'])->name('admin.brands.stock.update');
+    Route::delete('/admin/brands/{brand}/stock/{batch}', [BrandController::class, 'stockDestroy'])->name('admin.brands.stock.destroy');
     Route::resource('admin/brands', BrandController::class)->names([
         'index' => 'admin.brands.index',
         'create' => 'admin.brands.create',
@@ -76,6 +83,7 @@ Route::middleware(['auth'])->group(function () {
     
     // Sales
     Route::get('/admin/sales/search-customers', [SaleController::class, 'searchCustomers'])->name('admin.sales.search-customers');
+    Route::get('/admin/sales/suggested-price', [SaleController::class, 'suggestedPrice'])->name('admin.sales.suggested-price');
     Route::get('/admin/sales/{id}/receipt', [SaleController::class, 'receipt'])->name('admin.sales.receipt');
     Route::post('/admin/sales/{sale}/payments', [SaleController::class, 'storePayment'])->name('admin.sales.payments.store');
     Route::post('/admin/sales/{sale}/payments/from-extra-paid', [ExtraPaidController::class, 'useForSalePayment'])->name('admin.sales.payments.from-extra-paid');

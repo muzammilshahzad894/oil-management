@@ -101,7 +101,7 @@
             const brandId = {{ $sale->brand_id }};
             const brand = allBrands.find(function(b) { return b.id == brandId; });
             if (brand) {
-                const stock = brand.quantity ?? 0;
+                const stock = brand.inventory_batches_sum_quantity_remaining ?? 0;
                 const $stockInfo = $('#stock-info');
                 $stockInfo.html('<i class="fas fa-box me-2"></i>Available stock: <span class="stock-number">' + stock + '</span>').show();
                 $stockInfo.removeClass('stock-info-low stock-info-ok').addClass(parseInt(stock) < 10 ? 'stock-info-low' : 'stock-info-ok');
@@ -110,21 +110,20 @@
         
         function updateAmountFromBrandAndQuantity() {
             const brandId = $brandId.val();
-            if (!brandId) return;
-            const brand = allBrands.find(function(b) { return b.id == brandId; });
-            if (!brand) return;
             const qty = parseInt($('#quantity').val(), 10) || 0;
-            const salePrice = parseFloat(brand.sale_price) || 0;
-            const calculated = qty * salePrice;
-            $('#price').val(calculated > 0 ? calculated : '');
+            if (!brandId || qty < 1) return;
+            $.get('{{ route("admin.sales.suggested-price") }}', { brand_id: brandId, quantity: qty }, function(data) {
+                if (data.suggested_price != null) {
+                    $('#price').val(data.suggested_price);
+                }
+            });
         }
 
         function showAllBrands() {
             let html = '';
             $.each(allBrands, function(index, brand) {
-                const stock = brand.quantity ?? 0;
-                const salePrice = brand.sale_price != null ? brand.sale_price : '';
-                html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '" data-stock="' + stock + '" data-sale-price="' + salePrice + '">' +
+                const stock = brand.inventory_batches_sum_quantity_remaining ?? 0;
+                html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '" data-stock="' + stock + '">' +
                     brand.name + ' (Stock: ' + stock + ')' +
                     '</a>';
             });
@@ -149,9 +148,8 @@
                     } else {
                         let html = '';
                         $.each(filtered, function(index, brand) {
-                            const stock = brand.quantity ?? 0;
-                            const salePrice = brand.sale_price != null ? brand.sale_price : '';
-                            html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '" data-stock="' + stock + '" data-sale-price="' + salePrice + '">' +
+                            const stock = brand.inventory_batches_sum_quantity_remaining ?? 0;
+                            html += '<a class="dropdown-item brand-option" href="#" data-id="' + brand.id + '" data-stock="' + stock + '">' +
                                 brand.name + ' (Stock: ' + stock + ')' +
                                 '</a>';
                         });

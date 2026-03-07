@@ -89,10 +89,10 @@
                                 <td>
                                     <a href="{{ route('admin.sales.show', $sale->id) }}" class="btn btn-sm btn-info" title="View">View</a>
                                     <a href="{{ route('admin.sales.edit', $sale->id) }}" class="btn btn-sm btn-warning" title="Edit">Edit</a>
-                                    <button type="button" class="btn btn-sm btn-danger" title="Delete" onclick="confirmDelete({{ $sale->id }}, '{{ addslashes($sale->customer->name) }}', '{{ addslashes($sale->brand->name) }}')">Delete</button>
-                                    <form id="delete-form-{{ $sale->id }}" action="{{ route('admin.sales.destroy', $sale->id) }}" method="POST" style="display: none;">
+                                    <form action="{{ route('admin.sales.destroy', $sale->id) }}" method="POST" class="d-inline js-confirm-delete" data-confirm-title="Delete this sale?" data-confirm-text="Inventory will be restored.">
                                         @csrf
                                         @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Delete">Delete</button>
                                     </form>
                                 </td>
                             </tr>
@@ -120,26 +120,4 @@
         color: red;
     }
 </style>
-@endsection
-
-@section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    function confirmDelete(id, customerName, brandName) {
-        Swal.fire({
-            title: 'Are you sure?',
-            html: '<p>You want to delete this sale?</p><p><strong>Customer:</strong> ' + customerName + '<br><strong>Brand:</strong> ' + brandName + '</p><p class="text-danger"><small>Inventory will be restored automatically.</small></p>',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, delete it!',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $('#delete-form-' + id).submit();
-            }
-        });
-    }
-</script>
 @endsection

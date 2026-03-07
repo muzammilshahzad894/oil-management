@@ -48,7 +48,7 @@
                 </p>
             </div>
             <div class="col-md-4">
-                @if($sale->cost_at_sale !== null)
+                @if(($showPurchasePrice ?? true) && $sale->cost_at_sale !== null)
                     <p><strong>Purchase price (per unit):</strong> {{ format_amount($sale->cost_at_sale) }}</p>
                     <p><strong>Profit:</strong> {{ format_amount($sale->profit) }}</p>
                 @endif
@@ -61,9 +61,6 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="fas fa-money-bill-wave me-2"></i>Payments</span>
-        <button type="button" class="btn btn-sm btn-primary" id="btnExtraPaid" data-customer-id="{{ $sale->customer_id }}" data-customer-name="{{ addslashes($sale->customer->name) }}">
-            <i class="fas fa-wallet me-1"></i>Add extra paid
-        </button>
     </div>
     <div class="card-body">
         @if($sale->balance_due <= 0)
@@ -97,7 +94,7 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-plus me-2"></i>Add Payment
                 </button>
-                @if($sale->balance_due > 0)
+                @if(optional($sale->customer)->extra_paid_balance > 0)
                 <button type="button" class="btn btn-outline-success" id="btnGetFromExtraPaid" title="Get from extra paid" data-sale-id="{{ $sale->id }}" data-balance-due="{{ $sale->balance_due }}">
                     <i class="fas fa-wallet"></i>
                 </button>
@@ -146,37 +143,6 @@
     <a href="{{ route('admin.sales.index') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left me-2"></i>Back to Sales
     </a>
-</div>
-
-{{-- Modal: Add Extra Paid --}}
-<div class="modal fade" id="extraPaidModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-wallet me-2"></i>Add extra paid</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-2">Customer: <strong id="extraPaidCustomerName"></strong></p>
-                <p class="mb-3">Current extra paid balance: <strong id="extraPaidBalance">—</strong></p>
-                <form id="extraPaidForm">
-                    <input type="hidden" id="extraPaidCustomerId" name="customer_id">
-                    @csrf
-                    <div class="mb-3">
-                        <label for="extraPaidAmount" class="form-label">Amount to add <span class="text-danger">*</span></label>
-                        <input type="number" step="any" min="0.01" class="form-control" id="extraPaidAmount" name="amount" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="extraPaidNote" class="form-label">Note (optional)</label>
-                        <input type="text" class="form-control" id="extraPaidNote" name="note" placeholder="e.g. Advance received">
-                    </div>
-                    <button type="submit" class="btn btn-primary" id="extraPaidSubmitBtn">
-                        <i class="fas fa-save me-2"></i>Save
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
 </div>
 
 {{-- Modal: Get from Extra Paid (for this sale) --}}

@@ -44,6 +44,11 @@ class Sale extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function saleBatchAllocations(): HasMany
+    {
+        return $this->hasMany(SaleBatchAllocation::class);
+    }
+
     /** Total amount paid (sum of all payments). */
     public function getTotalPaidAttribute(): float
     {

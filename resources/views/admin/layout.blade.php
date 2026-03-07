@@ -937,7 +937,8 @@
     
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+    <!-- SweetAlert2 for delete confirmations -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(document).ready(function() {
             // Initialize Bootstrap tooltips
@@ -963,8 +964,9 @@
                 });
             }, 5000);
             
-            // Common form loading indicator
+            // Common form loading indicator (skip for delete-confirm forms — they handle submit themselves)
             $('form').on('submit', function() {
+                if ($(this).hasClass('js-confirm-delete')) return;
                 const $submitBtn = $(this).find('button[type="submit"], #submitBtn');
                 if ($submitBtn.length) {
                     $submitBtn.prop('disabled', true);
@@ -983,6 +985,34 @@
                         new bootstrap.Tooltip(this);
                     }
                 });
+            });
+
+            // Shared delete confirmation: show short dialog, submit only on confirm (button stays enabled on cancel)
+            $(document).on('submit', 'form.js-confirm-delete', function(e) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                var $form = $(this);
+                var title = $form.data('confirm-title') || 'Delete?';
+                var text = $form.data('confirm-text') || '';
+                var allocated = parseInt($form.data('allocated') || '0', 10);
+                if (allocated > 0) {
+                    text = allocated + ' unit(s) used in sales. Existing sales are not affected.';
+                }
+                Swal.fire({
+                    title: title,
+                    text: text,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Delete',
+                    cancelButtonText: 'Cancel'
+                }).then(function(r) {
+                    if (r.isConfirmed && $form.length) {
+                        $form[0].submit();
+                    }
+                });
+                return false;
             });
         });
     </script>

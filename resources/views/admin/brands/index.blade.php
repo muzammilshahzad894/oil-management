@@ -28,7 +28,6 @@
 @endsection
 
 @section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     $(document).ready(function() {
         let searchTimeout;
@@ -69,22 +68,5 @@
             }, 500);
         });
     });
-    
-    function confirmDelete(id, name) {
-        Swal.fire({
-            title: 'Are you sure?',
-            html: '<p>You want to delete brand <strong>' + name + '</strong>?</p><p class="text-danger"><small>This action cannot be undone.</small></p>',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, delete it!',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $('#delete-form-' + id).submit();
-            }
-        });
-    }
 </script>
 @endsection

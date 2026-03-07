@@ -4,20 +4,27 @@ namespace App\Http\Controllers\admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
-use App\Models\Payment;
+use App\Models\Customer;
 use App\Models\Sale;
-use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $totalSales = Sale::count();
-        $totalInventory = Brand::sum('quantity');
-        $totalReceived = (float) Payment::sum('amount');
-        $totalCost = (float) Sale::selectRaw('COALESCE(SUM(cost_at_sale * quantity), 0) as total')->value('total');
-        $totalProfit = $totalReceived - $totalCost;
-        
+        $totalCustomers = Customer::count();
+
+        // Today's Sales: total invoiced (sum of price) for sales where sale_date is today
+        $todaySales = Sale::whereDate('sale_date', Carbon::today())->sum('price');
+
+        // Monthly Profit: same logic as profitLoss - sales for current month, profit = totalInvoiced - totalCost
+        $monthStart = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $monthEnd = Carbon::now()->format('Y-m-d');
+        $monthlySales = Sale::whereBetween('sale_date', [$monthStart, $monthEnd])->get();
+        $totalInvoiced = $monthlySales->sum('price');
+        $totalCost = $monthlySales->sum(fn($s) => $s->total_cost ?? 0);
+        $monthlyProfit = $totalInvoiced - (float) $totalCost;
+
         $recentSales = Sale::with([
             'customer' => function($q) {
                 $q->withTrashed();
@@ -28,15 +35,17 @@ class DashboardController extends Controller
         ])->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
-        
-        $lowStock = Brand::where('quantity', '<', 10)
-            ->orderBy('quantity', 'asc')
-            ->get();
-        
+
+        $lowStock = Brand::withSum('inventoryBatches', 'quantity_remaining')
+            ->get()
+            ->filter(fn($b) => (int) ($b->inventory_batches_sum_quantity_remaining ?? 0) < 10)
+            ->sortBy('inventory_batches_sum_quantity_remaining')
+            ->values();
+
         return view('admin.dashboard', compact(
-            'totalSales',
-            'totalInventory',
-            'totalProfit',
+            'todaySales',
+            'monthlyProfit',
+            'totalCustomers',
             'recentSales',
             'lowStock'
         ));

@@ -32,7 +32,23 @@ class Brand extends Model
     }
 
     /**
-     * Add quantity to stock.
+     * Get inventory batches (FIFO stock entries).
+     */
+    public function inventoryBatches(): HasMany
+    {
+        return $this->hasMany(InventoryBatch::class);
+    }
+
+    /**
+     * Total available stock from FIFO batches (quantity_remaining).
+     */
+    public function getAvailableStockAttribute(): int
+    {
+        return (int) $this->inventoryBatches()->sum('quantity_remaining');
+    }
+
+    /**
+     * Add quantity to stock (legacy). Prefer adding via inventory batches.
      */
     public function addStock(int $quantity): void
     {
@@ -40,7 +56,7 @@ class Brand extends Model
     }
 
     /**
-     * Remove quantity from stock.
+     * Remove quantity from stock (legacy). Sales use FIFO via InventoryService.
      */
     public function removeStock(int $quantity): void
     {

@@ -9,17 +9,8 @@
             <div class="stat-icon">
                 <i class="fas fa-shopping-cart"></i>
             </div>
-            <div class="stat-value">{{ $totalSales }}</div>
-            <div class="stat-label">Total Sales</div>
-        </div>
-    </div>
-    <div class="col-lg-4 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-warehouse"></i>
-            </div>
-            <div class="stat-value">{{ $totalInventory }}</div>
-            <div class="stat-label">Total Inventory</div>
+            <div class="stat-value">{{ format_amount($todaySales) }}</div>
+            <div class="stat-label">Today's Sales</div>
         </div>
     </div>
     <div class="col-lg-4 col-md-6 mb-4">
@@ -27,9 +18,17 @@
             <div class="stat-icon">
                 <i class="fas fa-chart-line"></i>
             </div>
-            <div class="stat-value {{ ($totalProfit ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">{{ format_amount($totalProfit ?? 0) }}</div>
-            <div class="stat-label">Actual Profit (P&L)</div>
-            <small class="text-muted">Received − Cost</small>
+            <div class="stat-value">{{ format_amount($monthlyProfit) }}</div>
+            <div class="stat-label">Monthly Profit</div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-value">{{ $totalCustomers }}</div>
+            <div class="stat-label">Total Customers</div>
         </div>
     </div>
 </div>
@@ -99,7 +98,7 @@
                                     <i class="fas fa-exclamation-circle text-danger me-2"></i>
                                     <strong>{{ $item->name }}</strong>
                                 </div>
-                                <span class="badge bg-danger">{{ $item->quantity }}</span>
+                                <span class="badge bg-danger">{{ $item->inventory_batches_sum_quantity_remaining ?? 0 }}</span>
                             </div>
                         @endforeach
                     </div>

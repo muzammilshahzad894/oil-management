@@ -34,8 +34,9 @@
             <input type="hidden" id="brand_id" name="brand_id" value="{{ old('brand_id', $sale->brand_id ?? '') }}" required>
                     <div id="brand_dropdown" class="dropdown-menu w-100" style="display: none;">
                 @foreach($brands as $brand)
-                    <a class="dropdown-item brand-option" href="#" data-id="{{ $brand->id }}" data-stock="{{ $brand->quantity ?? 0 }}" data-sale-price="{{ $brand->sale_price ?? '' }}">
-                        {{ $brand->name }} (Stock: {{ $brand->quantity ?? 0 }})
+                    @php $stock = (int) ($brand->inventory_batches_sum_quantity_remaining ?? 0); @endphp
+                    <a class="dropdown-item brand-option" href="#" data-id="{{ $brand->id }}" data-stock="{{ $stock }}">
+                        {{ $brand->name }} (Stock: {{ $stock }})
                     </a>
                 @endforeach
             </div>

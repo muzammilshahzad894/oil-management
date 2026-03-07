@@ -36,7 +36,6 @@ class Payment extends Model
             self::METHOD_CASH => 'Cash',
             self::METHOD_BANK => 'Bank Transfer',
             self::METHOD_CHEQUE => 'Cheque',
-            self::METHOD_EXTRA_PAID => 'From Extra Paid',
             self::METHOD_OTHER => 'Other',
         ];
     }

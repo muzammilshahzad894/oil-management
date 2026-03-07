@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\Brand;
 use App\Models\Payment;
 use App\Models\CustomerExtraPayment;
+use App\Services\InventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -43,14 +44,32 @@ class SaleController extends Controller
     public function searchCustomers(Request $request)
     {
         $search = $request->input('search', '');
-        
+
         $customers = Customer::where('name', 'like', '%' . $search . '%')
             ->orWhere('phone', 'like', '%' . $search . '%')
             ->orWhere('email', 'like', '%' . $search . '%')
             ->limit(10)
             ->get(['id', 'name', 'phone', 'email']);
-        
+
         return response()->json($customers);
+    }
+
+    /**
+     * Suggested sale amount for brand + quantity (FIFO from inventory batches' sale_price).
+     */
+    public function suggestedPrice(Request $request)
+    {
+        $brandId = $request->input('brand_id');
+        $quantity = (int) $request->input('quantity', 0);
+        if (!$brandId || $quantity < 1) {
+            return response()->json(['suggested_price' => null]);
+        }
+        $brand = Brand::find($brandId);
+        if (!$brand) {
+            return response()->json(['suggested_price' => null]);
+        }
+        $price = InventoryService::suggestedSalePrice($brand, $quantity);
+        return response()->json(['suggested_price' => $price]);
     }
 
     /**
@@ -59,7 +78,7 @@ class SaleController extends Controller
     public function create(Request $request)
     {
         $customers = Customer::orderBy('name')->get();
-        $brands = Brand::all();
+        $brands = Brand::withSum('inventoryBatches', 'quantity_remaining')->get();
         $selectedCustomerId = $request->input('customer_id');
         return view('admin.sales.create', compact('customers', 'brands', 'selectedCustomerId'));
     }
@@ -102,18 +121,16 @@ class SaleController extends Controller
             if (!$brand) {
                 return $this->backWithBrand($request)->with('error', 'Brand not found.');
             }
-            if (($brand->quantity ?? 0) < $request->quantity) {
+            $availableStock = InventoryService::availableStock($brand);
+            if ($availableStock < $request->quantity) {
                 return $this->backWithBrand($request)
-                    ->with('error', 'Insufficient stock. Available: ' . ($brand->quantity ?? 0));
+                    ->with('error', 'Insufficient stock. Available: ' . $availableStock);
             }
 
-            $costAtSale = $brand->cost_price !== null ? (float) $brand->cost_price : null;
             $saleData = $request->only(['customer_id', 'brand_id', 'quantity', 'price', 'sale_date', 'notes']);
-            $saleData['cost_at_sale'] = $costAtSale;
             $saleData['is_paid'] = false;
-
             $sale = Sale::create($saleData);
-            $brand->removeStock($request->quantity);
+            InventoryService::allocateForSale($sale, $brand, (int) $request->quantity);
 
             $initialAmount = (float) ($request->input('initial_payment') ?? 0);
             $amountFromExtra = $initialExtraPaid;
@@ -217,7 +234,7 @@ class SaleController extends Controller
     public function edit(string $id)
     {
         $sale = Sale::findOrFail($id);
-        $brands = Brand::all();
+        $brands = Brand::withSum('inventoryBatches', 'quantity_remaining')->get();
         return view('admin.sales.edit', compact('sale', 'brands'));
     }
 
@@ -241,43 +258,27 @@ class SaleController extends Controller
 
         DB::beginTransaction();
         try {
-            if ($oldBrandId != $request->brand_id || $oldQuantity != $request->quantity) {
-                $oldBrand = Brand::find($oldBrandId);
-                if ($oldBrand) {
-                    $oldBrand->addStock($oldQuantity);
-                }
+            $newBrand = Brand::find($request->brand_id);
+            if (!$newBrand) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Brand not found.');
+            }
 
-                $newBrand = Brand::find($request->brand_id);
-                if (!$newBrand) {
-                    return redirect()->back()
-                        ->withInput()
-                        ->with('error', 'Brand not found.');
-                }
-
-                $availableStock = $newBrand->quantity + ($oldBrandId == $request->brand_id ? $oldQuantity : 0);
-                if ($availableStock < $request->quantity) {
-                    if ($oldBrand && $oldBrandId != $request->brand_id) {
-                        $oldBrand->removeStock($oldQuantity);
-                    }
+            if ($oldBrandId != $request->brand_id || $oldQuantity != (int) $request->quantity) {
+                InventoryService::returnAllocation($sale);
+                $availableStock = InventoryService::availableStock($newBrand);
+                $needed = (int) $request->quantity;
+                if ($availableStock < $needed) {
                     return redirect()->back()
                         ->withInput()
                         ->with('error', 'Insufficient stock. Available: ' . $availableStock);
                 }
-
-                if ($oldBrandId == $request->brand_id) {
-                    $newBrand->quantity = $availableStock - $request->quantity;
-                    $newBrand->save();
-                } else {
-                    $newBrand->removeStock($request->quantity);
-                }
+                $sale->update($request->only(['customer_id', 'brand_id', 'quantity', 'price', 'sale_date', 'notes']));
+                InventoryService::allocateForSale($sale, $newBrand, $needed);
+            } else {
+                $sale->update($request->only(['customer_id', 'brand_id', 'quantity', 'price', 'sale_date', 'notes']));
             }
-
-            $updateData = $request->only(['customer_id', 'brand_id', 'quantity', 'price', 'sale_date', 'notes']);
-            $newBrand = Brand::find($request->brand_id);
-            if ($newBrand && $newBrand->cost_price !== null) {
-                $updateData['cost_at_sale'] = (float) $newBrand->cost_price;
-            }
-            $sale->update($updateData);
 
             DB::commit();
 
@@ -372,20 +373,14 @@ class SaleController extends Controller
     public function destroy(string $id)
     {
         $sale = Sale::findOrFail($id);
-        
+
         DB::beginTransaction();
         try {
-            // Restore brand stock
-            $brand = Brand::find($sale->brand_id);
-            if ($brand) {
-                $brand->addStock($sale->quantity);
-            }
-            
+            InventoryService::returnAllocation($sale);
             $sale->delete();
-            
+
             DB::commit();
-            $sale->payments()->delete();
-            
+
             return redirect()->route('admin.sales.index')
                 ->with('success', 'Sale deleted successfully and inventory restored.');
         } catch (\Exception $e) {

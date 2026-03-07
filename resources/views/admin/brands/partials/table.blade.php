@@ -7,33 +7,28 @@
                     <th>Description</th>
                     <th>Stock</th>
                     <th>Sold</th>
-                    @if($showPurchasePrice ?? true)
-                    <th>Purchase price</th>
-                    @endif
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($brands as $brand)
+                    @php $stock = (int) ($brand->inventory_batches_sum_quantity_remaining ?? 0); @endphp
                     <tr>
                         <td><strong>{{ $brand->name }}</strong></td>
                         <td>{{ Str::limit($brand->description, 50) ?? 'N/A' }}</td>
                         <td>
-                            <span class="badge {{ ($brand->quantity ?? 0) < 10 ? 'bg-danger' : 'bg-success' }}">
-                                {{ $brand->quantity ?? 0 }}
+                            <span class="badge {{ $stock < 10 ? 'bg-danger' : 'bg-success' }}">
+                                {{ $stock }}
                             </span>
                         </td>
                         <td>{{ $brand->sales_sum_quantity ?? 0 }}</td>
-                        @if($showPurchasePrice ?? true)
-                        <td>{{ $brand->cost_price !== null ? format_amount($brand->cost_price) : '—' }}</td>
-                        @endif
                         <td>
                             <a href="{{ route('admin.brands.show', $brand->id) }}" class="btn btn-sm btn-info">View</a>
                             <a href="{{ route('admin.brands.edit', $brand->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ $brand->id }}, '{{ addslashes($brand->name) }}')">Delete</button>
-                            <form id="delete-form-{{ $brand->id }}" action="{{ route('admin.brands.destroy', $brand->id) }}" method="POST" style="display: none;">
+                            <form action="{{ route('admin.brands.destroy', $brand->id) }}" method="POST" class="d-inline js-confirm-delete" data-confirm-title="Delete this brand?" data-confirm-text="This cannot be undone.">
                                 @csrf
                                 @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                             </form>
                         </td>
                     </tr>

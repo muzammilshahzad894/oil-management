@@ -7,6 +7,8 @@ use App\Models\Brand;
 use App\Models\Customer;
 use App\Models\Sale;
 use App\Models\Payment;
+use App\Models\InventoryBatch;
+use App\Services\InventoryService;
 use Carbon\Carbon;
 
 class OilManagementSeeder extends Seeder
@@ -16,7 +18,7 @@ class OilManagementSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create Brands (with quantity / inventory and purchase price for P&L)
+        // Create Brands (name + description only; stock is added via inventory batches)
         $brandsData = [
             ['name' => 'Castrol', 'description' => 'Premium engine oil'],
             ['name' => 'Mobil', 'description' => 'High performance motor oil'],
@@ -27,14 +29,22 @@ class OilManagementSeeder extends Seeder
 
         $createdBrands = [];
         foreach ($brandsData as $data) {
-            $costPrice = rand(20, 80) + (rand(0, 99) / 100);
-            $salePrice = round($costPrice * (1 + (rand(5, 25) / 100)), 2);
-            $createdBrands[] = Brand::create([
+            $brand = Brand::create([
                 'name' => $data['name'],
                 'description' => $data['description'],
-                'quantity' => rand(50, 500),
-                'cost_price' => $costPrice,
+            ]);
+            $createdBrands[] = $brand;
+            // Add initial stock as FIFO batch(es)
+            $qty = rand(50, 500);
+            $costPrice = rand(20, 80) + (rand(0, 99) / 100);
+            $salePrice = round($costPrice * (1 + rand(5, 25) / 100), 2);
+            InventoryBatch::create([
+                'brand_id' => $brand->id,
+                'quantity' => $qty,
+                'quantity_remaining' => $qty,
+                'cost_per_unit' => $costPrice,
                 'sale_price' => $salePrice,
+                'received_at' => Carbon::now()->subMonths(2),
             ]);
         }
 
@@ -56,7 +66,7 @@ class OilManagementSeeder extends Seeder
             ]);
         }
 
-        // Create Sales (decrease brand quantity, set cost_at_sale for P&L)
+        // Create Sales (FIFO allocation for cost_at_sale)
         $startDate = Carbon::now()->subMonths(3);
         $endDate = Carbon::now();
         $saleIds = [];
@@ -64,11 +74,10 @@ class OilManagementSeeder extends Seeder
         for ($i = 0; $i < 150; $i++) {
             $customer = $customers[array_rand($customers)];
             $brand = $createdBrands[array_rand($createdBrands)];
-
-            if ($brand->quantity > 0) {
-                $quantity = rand(1, min(20, $brand->quantity));
+            $availableStock = InventoryService::availableStock($brand);
+            if ($availableStock > 0) {
+                $quantity = rand(1, min(20, $availableStock));
                 $price = rand(50, 500);
-                $costAtSale = $brand->cost_price !== null ? (float) $brand->cost_price : null;
                 $saleDate = Carbon::createFromTimestamp(
                     rand($startDate->timestamp, $endDate->timestamp)
                 );
@@ -78,13 +87,12 @@ class OilManagementSeeder extends Seeder
                     'brand_id' => $brand->id,
                     'quantity' => $quantity,
                     'price' => $price,
-                    'cost_at_sale' => $costAtSale,
                     'sale_date' => $saleDate,
                     'is_paid' => false,
                     'notes' => rand(0, 1) == 1 ? 'Regular customer order' : null,
                 ]);
+                InventoryService::allocateForSale($sale, $brand, $quantity);
                 $saleIds[] = $sale;
-                $brand->removeStock($quantity);
             }
         }
 

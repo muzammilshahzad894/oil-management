@@ -44,6 +44,9 @@
                             <th>Brand</th>
                             <th>Quantity</th>
                             <th>Price</th>
+                            @if($showPurchasePrice ?? true)
+                            <th>Purchase price</th>
+                            @endif
                             <th>Status</th>
                             <th>Notes</th>
                             <th>Actions</th>
@@ -56,6 +59,9 @@
                                 <td>{{ $sale->brand->name }}</td>
                                 <td><span class="badge bg-primary">{{ $sale->quantity }}</span></td>
                                 <td>{{ $sale->price !== null ? format_amount($sale->price) : 'N/A' }}</td>
+                                @if($showPurchasePrice ?? true)
+                                <td>{{ $sale->cost_at_sale !== null ? format_amount($sale->cost_at_sale) : '—' }}</td>
+                                @endif
                                 <td>
                                     @if($sale->total_paid >= $sale->price)
                                         <span class="badge bg-success">Paid</span>
@@ -69,10 +75,10 @@
                                 <td>
                                     <a href="{{ route('admin.sales.show', $sale->id) }}" class="btn btn-sm btn-info">View</a>
                                     <a href="{{ route('admin.sales.edit', $sale->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                    <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ $sale->id }}, '{{ addslashes($customer->name) }}', '{{ addslashes($sale->brand->name) }}')">Delete</button>
-                                    <form id="delete-form-{{ $sale->id }}" action="{{ route('admin.sales.destroy', $sale->id) }}" method="POST" style="display: none;">
+                                    <form action="{{ route('admin.sales.destroy', $sale->id) }}" method="POST" class="d-inline js-confirm-delete" data-confirm-title="Delete this sale?" data-confirm-text="Inventory will be restored.">
                                         @csrf
                                         @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                                     </form>
                                 </td>
                             </tr>
@@ -91,26 +97,4 @@
         @endif
     </div>
 </div>
-@endsection
-
-@section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    function confirmDelete(id, customerName, brandName) {
-        Swal.fire({
-            title: 'Are you sure?',
-            html: '<p>You want to delete this sale?</p><p><strong>Customer:</strong> ' + customerName + '<br><strong>Brand:</strong> ' + brandName + '</p><p class="text-danger"><small>Inventory will be restored automatically.</small></p>',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, delete it!',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $('#delete-form-' + id).submit();
-            }
-        });
-    }
-</script>
 @endsection
