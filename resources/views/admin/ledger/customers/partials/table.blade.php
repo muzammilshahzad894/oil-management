@@ -58,8 +58,7 @@
             </div>
         @endforeach
     </div>
-    <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
-        <p class="text-muted small mb-0">Showing {{ $customers->firstItem() }}–{{ $customers->lastItem() }} of {{ $customers->total() }}</p>
+    <div class="mt-3">
         {{ $customers->links() }}
     </div>
 @else

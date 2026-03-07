@@ -58,10 +58,12 @@ class BrandController extends Controller
      */
     public function show(string $id)
     {
-        $brand = Brand::with('inventoryBatches')->findOrFail($id);
-        $sales = $brand->sales()->with('customer')->orderBy('sale_date', 'desc')->orderBy('created_at', 'desc')->paginate(15);
+        $brand = Brand::findOrFail($id);
+        $stockBatches = InventoryBatch::where('brand_id', $id)->orderBy('created_at')->paginate(15, ['*'], 'stock_page');
+        $archivedBatchesCount = InventoryBatch::where('brand_id', $id)->onlyTrashed()->count();
+        $sales = $brand->sales()->with('customer')->orderBy('sale_date', 'desc')->orderBy('created_at', 'desc')->paginate(15, ['*'], 'sales_page');
         $availableStock = InventoryService::availableStock($brand);
-        return view('admin.brands.show', compact('brand', 'sales', 'availableStock'));
+        return view('admin.brands.show', compact('brand', 'stockBatches', 'archivedBatchesCount', 'sales', 'availableStock'));
     }
 
     /**

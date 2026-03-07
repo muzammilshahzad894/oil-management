@@ -29,7 +29,7 @@
     </div>
 </div>
 
-@if($brand->inventoryBatches->count() > 0 || $brand->inventoryBatches()->onlyTrashed()->count() > 0)
+@if($stockBatches->total() > 0 || $archivedBatchesCount > 0)
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="fas fa-layer-group me-2"></i>Stock List</span>
@@ -38,7 +38,7 @@
         </a>
     </div>
     <div class="card-body">
-        @if($brand->inventoryBatches->count() > 0)
+        @if($stockBatches->total() > 0)
         <div class="table-responsive">
             <table class="table table-sm table-hover">
                 <thead>
@@ -54,7 +54,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($brand->inventoryBatches->sortBy('created_at') as $batch)
+                    @foreach($stockBatches as $batch)
                     @php $allocated = (int) $batch->saleBatchAllocations()->sum('quantity'); @endphp
                     <tr>
                         <td>{{ $batch->created_at->format('M d, Y H:i A') }}</td>
@@ -76,6 +76,9 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
+        <div class="mt-2">
+            {{ $stockBatches->links() }}
         </div>
         @else
         <p class="text-muted mb-0">No active batches. <a href="{{ route('admin.brands.stock.create', $brand->id) }}">Add stock</a> or view <a href="{{ route('admin.brands.stock.archived', $brand->id) }}">archived batches</a>.</p>
@@ -121,9 +124,6 @@
                         @endforeach
                     </tbody>
                 </table>
-            </div>
-            <div class="text-muted small mt-2">
-                Showing {{ $sales->firstItem() }} to {{ $sales->lastItem() }} of {{ $sales->total() }} records
             </div>
             <div class="mt-4">
                 {{ $sales->links() }}

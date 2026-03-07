@@ -100,9 +100,6 @@
                     </tbody>
                 </table>
             </div>
-            <div class="text-muted small mt-2">
-                Showing {{ $sales->firstItem() }} to {{ $sales->lastItem() }} of {{ $sales->total() }} records
-            </div>
             <div class="mt-4">
                 {{ $sales->links() }}
             </div>

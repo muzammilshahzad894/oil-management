@@ -33,9 +33,6 @@
     </div>
     <div class="card-body">
         @if($sales->count() > 0)
-            <div class="text-muted small mb-2">
-                Showing {{ $sales->firstItem() }} to {{ $sales->lastItem() }} of {{ $sales->total() }} records
-            </div>
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -85,9 +82,6 @@
                         @endforeach
                     </tbody>
                 </table>
-            </div>
-            <div class="text-muted small mt-2">
-                Showing {{ $sales->firstItem() }} to {{ $sales->lastItem() }} of {{ $sales->total() }} records
             </div>
             <div class="mt-4">
                 {{ $sales->links() }}

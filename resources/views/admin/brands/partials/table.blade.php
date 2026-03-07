@@ -36,9 +36,6 @@
             </tbody>
         </table>
     </div>
-    <div class="text-muted small mt-2">
-        Showing {{ $brands->firstItem() }} to {{ $brands->lastItem() }} of {{ $brands->total() }} records
-    </div>
     <div class="mt-4">
         {{ $brands->links() }}
     </div>

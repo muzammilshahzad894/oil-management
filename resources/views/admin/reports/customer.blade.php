@@ -143,14 +143,9 @@
                     </tfoot>
                 </table>
             </div>
-            <div class="text-muted small mt-2">
-                Showing {{ $paginatedSales->firstItem() }} to {{ $paginatedSales->lastItem() }} of {{ $paginatedSales->total() }} records
+            <div class="mt-4">
+                {{ $paginatedSales->links() }}
             </div>
-            @if($paginatedSales && $paginatedSales->hasPages())
-                <div class="mt-4">
-                    {{ $paginatedSales->links() }}
-                </div>
-            @endif
         @elseif($hasCustomer)
             <p class="text-muted text-center py-4">No sales found for the selected criteria.</p>
         @endif
