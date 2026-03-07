@@ -203,7 +203,7 @@ class BrandController extends Controller
     public function stockArchived(string $id)
     {
         $brand = Brand::findOrFail($id);
-        $batches = InventoryBatch::where('brand_id', $id)->onlyTrashed()->orderBy('deleted_at', 'desc')->get();
+        $batches = InventoryBatch::where('brand_id', $id)->onlyTrashed()->orderBy('deleted_at', 'desc')->paginate(15);
         return view('admin.brands.stock-archived', compact('brand', 'batches'));
     }
 

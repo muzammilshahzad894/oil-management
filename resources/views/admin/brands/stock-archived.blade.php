@@ -10,7 +10,7 @@
     </div>
     <div class="card-body">
         @if($batches->count() > 0)
-        <p class="text-muted small mb-3">Deleted batches are listed below. Restore to make them active again in Stock Batches (FIFO).</p>
+        <p class="text-muted small mb-3">Deleted batches are listed below. Restore to make them active again in Stock Batches.</p>
         <div class="table-responsive">
             <table class="table table-sm table-hover">
                 <thead>
@@ -43,6 +43,9 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
+        <div class="mt-4">
+            {{ $batches->links() }}
         </div>
         @else
         <p class="text-muted mb-0">No archived batches.</p>
