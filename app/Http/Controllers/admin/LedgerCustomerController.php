@@ -6,6 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\LedgerCustomer;
 use App\Models\LedgerTransaction;
 use Illuminate\Http\Request;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Color;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class LedgerCustomerController extends Controller
 {
@@ -178,45 +184,74 @@ class LedgerCustomerController extends Controller
     }
 
     /**
-     * Export customer ledger (all transactions) as CSV.
+     * Export customer ledger (all transactions) as Excel (.xlsx) with auto-sized columns.
      */
     public function export(LedgerCustomer $customer)
     {
         $transactions = $customer->transactions()->orderBy('transaction_date', 'desc')->orderBy('id', 'desc')->get();
         $runningBalance = (float) $customer->balance;
 
-        $filename = 'ledger_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $customer->name) . '_' . date('Y-m-d') . '.csv';
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Ledger');
 
-        $callback = function () use ($customer, $transactions, &$runningBalance) {
-            $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM for Excel
-            fputcsv($file, ['Ledger - ' . $customer->name]);
-            fputcsv($file, ['Exported on: ' . date('Y-m-d H:i:s')]);
-            fputcsv($file, ['Current balance: Rs ' . number_format(abs($customer->balance), 0) . ' (' . ($customer->balance > 0 ? 'You will give' : ($customer->balance < 0 ? 'You will get' : 'Settled')) . ')']);
-            fputcsv($file, []);
-            fputcsv($file, ['Entry', 'Description', 'You gave', 'You get', 'Balance after']);
+        $row = 1;
+        $sheet->setCellValue('A' . $row, 'Ledger - ' . $customer->name);
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        $row++;
+        $sheet->setCellValue('A' . $row, 'Exported on: ' . date('Y-m-d H:i:s'));
+        $row++;
+        $sheet->setCellValue('A' . $row, 'Current balance: Rs ' . number_format(abs($customer->balance), 0) . ' (' . ($customer->balance > 0 ? 'You will give' : ($customer->balance < 0 ? 'You will get' : 'Settled')) . ')');
+        $row += 2;
+        $headerRow = $row;
+        $sheet->setCellValue('A' . $row, 'Entry');
+        $sheet->setCellValue('B' . $row, 'Description');
+        $sheet->setCellValue('C' . $row, 'You gave');
+        $sheet->setCellValue('D' . $row, 'You get');
+        $sheet->setCellValue('E' . $row, 'Balance after');
+        // Highlight column header row: bold white text on dark blue background
+        $sheet->getStyle('A' . $headerRow . ':E' . $headerRow)->getFont()->setBold(true)->setColor(new Color('FFFFFFFF'));
+        $sheet->getStyle('A' . $headerRow . ':E' . $headerRow)->getFill()
+            ->setFillType(Fill::FILL_SOLID)
+            ->getStartColor()->setARGB('FF2F5496');
+        $sheet->getStyle('A' . $headerRow . ':E' . $headerRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+        $row++;
 
-            foreach ($transactions as $tx) {
-                $balanceAfter = $runningBalance;
-                $runningBalance -= $tx->type === 'received' ? (float) $tx->amount : -(float) $tx->amount;
-                $dateStr = $tx->transaction_date->format('D, d M Y · H:i');
-                $desc = $tx->description ?? '';
-                $youGave = $tx->type === 'gave' ? number_format($tx->amount, 0) : '';
-                $youGet = $tx->type === 'received' ? number_format($tx->amount, 0) : '';
-                $balStr = 'Rs ' . number_format(abs($balanceAfter), 0);
-                fputcsv($file, [$dateStr, $desc, $youGave, $youGet, $balStr]);
-            }
+        foreach ($transactions as $tx) {
+            $balanceAfter = $runningBalance;
+            $runningBalance -= $tx->type === 'received' ? (float) $tx->amount : -(float) $tx->amount;
+            $dateStr = $tx->transaction_date->format('D, d M Y · H:i');
+            $desc = $tx->description ?? '';
+            $youGave = $tx->type === 'gave' ? number_format($tx->amount, 0) : '';
+            $youGet = $tx->type === 'received' ? number_format($tx->amount, 0) : '';
+            $balStr = 'Rs ' . number_format(abs($balanceAfter), 0);
+            $sheet->setCellValue('A' . $row, $dateStr);
+            $sheet->setCellValue('B' . $row, $desc);
+            $sheet->setCellValue('C' . $row, $youGave);
+            $sheet->setCellValue('D' . $row, $youGet);
+            $sheet->setCellValue('E' . $row, $balStr);
+            $row++;
+        }
 
-            fputcsv($file, []);
-            fputcsv($file, ['Total you received (You get)', 'Rs ' . number_format($customer->total_received, 0)]);
-            fputcsv($file, ['Total you gave (You gave)', 'Rs ' . number_format($customer->total_gave, 0)]);
-            fclose($file);
-        };
+        $row += 2;
+        $sheet->setCellValue('A' . $row, 'Total you received (You get)');
+        $sheet->setCellValue('B' . $row, 'Rs ' . number_format($customer->total_received, 0));
+        $row++;
+        $sheet->setCellValue('A' . $row, 'Total you gave (You gave)');
+        $sheet->setCellValue('B' . $row, 'Rs ' . number_format($customer->total_gave, 0));
 
-        return response()->stream($callback, 200, $headers);
+        // Auto-size columns A to E so Excel opens with readable column widths
+        foreach (['A', 'B', 'C', 'D', 'E'] as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $filename = 'ledger_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $customer->name) . '_' . date('Y-m-d') . '.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 }

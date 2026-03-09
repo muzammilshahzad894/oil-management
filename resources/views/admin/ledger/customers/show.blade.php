@@ -250,11 +250,12 @@
 .ledger-detail-actions { margin-left: auto; }
 .ledger-detail-actions .btn { white-space: nowrap; }
 
-/* Shared ledger action buttons */
+/* Shared ledger action buttons - compact size */
 .ledger-btn {
     font-weight: 600;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+    font-size: 0.8125rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
     border: none;
     transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
@@ -264,34 +265,34 @@
 .ledger-btn-got {
     background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
     color: #fff;
-    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.4);
+    box-shadow: 0 1px 4px rgba(22, 163, 74, 0.35);
 }
 .ledger-btn-got:hover {
     background: linear-gradient(135deg, #15803d 0%, #166534 100%);
     color: #fff;
-    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.5);
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.45);
 }
 
 .ledger-btn-gave {
     background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
     color: #fff;
-    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+    box-shadow: 0 1px 4px rgba(220, 38, 38, 0.35);
 }
 .ledger-btn-gave:hover {
     background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
     color: #fff;
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5);
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.45);
 }
 
 .ledger-btn-export {
     background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
     color: #fff;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+    box-shadow: 0 1px 4px rgba(37, 99, 235, 0.35);
 }
 .ledger-btn-export:hover {
     background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
     color: #fff;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.5);
 }
 
 /* History card: on mobile put search below "History" and full width */
