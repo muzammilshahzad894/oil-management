@@ -176,4 +176,47 @@ class LedgerCustomerController extends Controller
             'totals' => ['total_received' => $customer->total_received, 'total_gave' => $customer->total_gave, 'balance' => $customer->balance],
         ]);
     }
+
+    /**
+     * Export customer ledger (all transactions) as CSV.
+     */
+    public function export(LedgerCustomer $customer)
+    {
+        $transactions = $customer->transactions()->orderBy('transaction_date', 'desc')->orderBy('id', 'desc')->get();
+        $runningBalance = (float) $customer->balance;
+
+        $filename = 'ledger_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $customer->name) . '_' . date('Y-m-d') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($customer, $transactions, &$runningBalance) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM for Excel
+            fputcsv($file, ['Ledger - ' . $customer->name]);
+            fputcsv($file, ['Exported on: ' . date('Y-m-d H:i:s')]);
+            fputcsv($file, ['Current balance: Rs ' . number_format(abs($customer->balance), 0) . ' (' . ($customer->balance > 0 ? 'You will give' : ($customer->balance < 0 ? 'You will get' : 'Settled')) . ')']);
+            fputcsv($file, []);
+            fputcsv($file, ['Entry', 'Description', 'You gave', 'You get', 'Balance after']);
+
+            foreach ($transactions as $tx) {
+                $balanceAfter = $runningBalance;
+                $runningBalance -= $tx->type === 'received' ? (float) $tx->amount : -(float) $tx->amount;
+                $dateStr = $tx->transaction_date->format('D, d M Y · H:i');
+                $desc = $tx->description ?? '';
+                $youGave = $tx->type === 'gave' ? number_format($tx->amount, 0) : '';
+                $youGet = $tx->type === 'received' ? number_format($tx->amount, 0) : '';
+                $balStr = 'Rs ' . number_format(abs($balanceAfter), 0);
+                fputcsv($file, [$dateStr, $desc, $youGave, $youGet, $balStr]);
+            }
+
+            fputcsv($file, []);
+            fputcsv($file, ['Total you received (You get)', 'Rs ' . number_format($customer->total_received, 0)]);
+            fputcsv($file, ['Total you gave (You gave)', 'Rs ' . number_format($customer->total_gave, 0)]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

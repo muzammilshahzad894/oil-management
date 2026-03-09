@@ -9,16 +9,18 @@
     $balanceAbs = abs($balance);
 @endphp
 <div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center ledger-detail-header">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 ledger-detail-header">
         <span class="ledger-detail-name"><i class="fas fa-user me-2"></i>{{ $customer->name }}</span>
-        <div class="ledger-detail-actions">
-            <button type="button" class="btn btn-sm btn-success" id="btnYouGot" data-bs-toggle="modal" data-bs-target="#modalYouGot">
+        <div class="ledger-detail-actions d-flex flex-wrap align-items-center gap-2">
+            <button type="button" class="btn ledger-btn ledger-btn-got" id="btnYouGot" data-bs-toggle="modal" data-bs-target="#modalYouGot">
                 <i class="fas fa-hand-holding-usd me-1"></i>You got
             </button>
-            <button type="button" class="btn btn-sm btn-danger" id="btnYouGave" data-bs-toggle="modal" data-bs-target="#modalYouGave">
+            <button type="button" class="btn ledger-btn ledger-btn-gave" id="btnYouGave" data-bs-toggle="modal" data-bs-target="#modalYouGave">
                 <i class="fas fa-hand-holding me-1"></i>You gave
             </button>
-            <a href="{{ route('admin.ledger.customers.edit', $customer) }}" class="btn btn-sm btn-warning"><i class="fas fa-user-edit me-1"></i>Edit name</a>
+            <a href="{{ route('admin.ledger.customers.export', $customer) }}" class="btn ledger-btn ledger-btn-export" target="_blank" rel="noopener">
+                <i class="fas fa-file-export me-1"></i>Export
+            </a>
         </div>
     </div>
     <div class="card-body">
@@ -242,10 +244,55 @@
 .ledger-history-scroll-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .ledger-history-table { min-width: 640px; }
 
-/* Detail page header: stack name + buttons on mobile with better tap targets */
+/* Detail page header: name left, actions right */
 .ledger-detail-header { flex-wrap: wrap; gap: 0.75rem; }
 .ledger-detail-header .ledger-detail-name { font-weight: 600; }
-.ledger-detail-header .btn { white-space: nowrap; }
+.ledger-detail-actions { margin-left: auto; }
+.ledger-detail-actions .btn { white-space: nowrap; }
+
+/* Shared ledger action buttons */
+.ledger-btn {
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: none;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.ledger-btn:hover { transform: translateY(-1px); }
+.ledger-btn:active { transform: translateY(0); }
+
+.ledger-btn-got {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.4);
+}
+.ledger-btn-got:hover {
+    background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.5);
+}
+
+.ledger-btn-gave {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+}
+.ledger-btn-gave:hover {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5);
+}
+
+.ledger-btn-export {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+}
+.ledger-btn-export:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
+}
 
 /* History card: on mobile put search below "History" and full width */
 .ledger-history-header { flex-wrap: wrap; }
@@ -255,8 +302,8 @@
 @media (max-width: 768px) {
     .ledger-detail-header { flex-direction: column; align-items: stretch; text-align: center; }
     .ledger-detail-header .ledger-detail-name { order: 1; padding-bottom: 0.25rem; }
-    .ledger-detail-header .ledger-detail-actions { order: 2; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
-    .ledger-detail-header .ledger-detail-actions .btn { flex: 1 1 auto; min-width: 100px; }
+    .ledger-detail-actions { order: 2; margin-left: 0; justify-content: center; }
+    .ledger-detail-actions .ledger-btn { flex: 1 1 auto; min-width: 100px; }
 
     .ledger-history-header { flex-direction: column; align-items: stretch; }
     .ledger-history-title { width: 100%; margin-bottom: 0.5rem; }
