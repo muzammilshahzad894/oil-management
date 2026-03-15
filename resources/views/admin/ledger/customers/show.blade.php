@@ -19,7 +19,10 @@
                 <i class="fas fa-hand-holding me-1"></i>You gave
             </button>
             <a href="{{ route('admin.ledger.customers.export', $customer) }}" class="btn ledger-btn ledger-btn-export" target="_blank" rel="noopener">
-                <i class="fas fa-file-export me-1"></i>Export
+                <i class="fas fa-file-excel me-1"></i>Download Excel
+            </a>
+            <a href="{{ route('admin.ledger.customers.export-pdf', $customer) }}" class="btn ledger-btn ledger-btn-pdf" target="_blank" rel="noopener">
+                <i class="fas fa-file-pdf me-1"></i>Download PDF
             </a>
         </div>
     </div>
@@ -293,6 +296,17 @@
     background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
     color: #fff;
     box-shadow: 0 2px 8px rgba(37, 99, 235, 0.5);
+}
+
+.ledger-btn-pdf {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(185, 28, 28, 0.35);
+}
+.ledger-btn-pdf:hover {
+    background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(185, 28, 28, 0.5);
 }
 
 /* History card: on mobile put search below "History" and full width */

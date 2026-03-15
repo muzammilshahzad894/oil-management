@@ -27,38 +27,50 @@
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="stat-card border-secondary">
-                    <div class="stat-icon bg-secondary bg-opacity-10 text-secondary">
-                        <i class="fas fa-tag"></i>
+                    <div class="stat-card-top d-flex align-items-center gap-2 mb-2">
+                        <div class="stat-icon bg-secondary bg-opacity-10 text-secondary">
+                            <i class="fas fa-tag"></i>
+                        </div>
+                        <span class="stat-label mb-0">Purchase Price</span>
                     </div>
                     <div class="stat-value">{{ format_amount($totalCost ?? 0) }}</div>
-                    <div class="stat-label">Purchase Price</div>
+                    <div class="stat-readable text-muted small">{{ format_amount_readable($totalCost ?? 0) }}</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card border-primary">
-                    <div class="stat-icon bg-primary bg-opacity-10 text-primary">
-                        <i class="fas fa-file-invoice-dollar"></i>
+                    <div class="stat-card-top d-flex align-items-center gap-2 mb-2">
+                        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <span class="stat-label mb-0">Selling Price</span>
                     </div>
                     <div class="stat-value">{{ format_amount($totalInvoiced ?? 0) }}</div>
-                    <div class="stat-label">Selling Price</div>
+                    <div class="stat-readable text-muted small">{{ format_amount_readable($totalInvoiced ?? 0) }}</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card {{ ($profitOnSales ?? 0) >= 0 ? 'border-success' : 'border-danger' }}">
-                    <div class="stat-icon {{ ($profitOnSales ?? 0) >= 0 ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger' }}">
-                        <i class="fas fa-chart-line"></i>
+                    <div class="stat-card-top d-flex align-items-center gap-2 mb-2">
+                        <div class="stat-icon {{ ($profitOnSales ?? 0) >= 0 ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger' }}">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <span class="stat-label mb-0">Profit</span>
                     </div>
                     <div class="stat-value {{ ($profitOnSales ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">{{ format_amount($profitOnSales ?? 0) }}</div>
-                    <div class="stat-label">Profit</div>
+                    <div class="stat-readable small {{ ($profitOnSales ?? 0) >= 0 ? 'text-success' : 'text-danger' }}" style="opacity: 0.9;">{{ format_amount_readable($profitOnSales ?? 0) }}</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card border-warning">
-                    <div class="stat-icon bg-warning bg-opacity-10 text-warning">
-                        <i class="fas fa-clock"></i>
+                    <div class="stat-card-top d-flex align-items-center gap-2 mb-2">
+                        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <span class="stat-label mb-0">Pending Amount</span>
                     </div>
                     <div class="stat-value">{{ format_amount($pendingAmount ?? 0) }}</div>
-                    <div class="stat-label">Pending Amount</div>
+                    <div class="stat-readable text-muted small">{{ format_amount_readable($pendingAmount ?? 0) }}</div>
                 </div>
             </div>
         </div>
@@ -75,5 +87,9 @@
 @section('styles')
 <style>
     .stat-card.border-primary, .stat-card.border-secondary, .stat-card.border-success, .stat-card.border-danger, .stat-card.border-warning { border-width: 2px !important; }
+    .stat-card-top { min-height: 2.5rem; }
+    .stat-card .stat-label { font-size: 0.9rem; font-weight: 600; color: #4a5568; }
+    .stat-value { margin-top: 0.25rem; }
+    .stat-readable { margin-top: 0.2rem; font-weight: 500; }
 </style>
 @endsection

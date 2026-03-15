@@ -312,10 +312,13 @@
         });
     });
 </script>
+<script src="{{ asset('admin-assets/js/sale-calculator.js') }}"></script>
 @endsection
 
 @section('styles')
 <style>
+    /* Calculator modal: appended to body so it always stays above backdrop */
+    .sale-calculator-modal .modal-content { background: #fff; }
     #customer_dropdown,
     #brand_dropdown {
         max-height: 250px !important;
@@ -380,6 +383,9 @@
         background-color: #f8d7da;
         color: #842029;
         border: 1px solid #f5c2c7;
+    }
+    .btn-calculator-trigger {
+        z-index: 0 !important;
     }
 </style>
 @endsection

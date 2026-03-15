@@ -57,9 +57,14 @@
     </div>
     <div class="col-md-4 mb-3">
         <label for="price" class="form-label">Amount <span class="text-danger">*</span></label>
-        <input type="number" step="any" class="form-control @error('price') is-invalid @enderror" id="price" name="price" value="{{ old('price', $sale->price ?? '') }}" min="0" required>
+        <div class="input-group">
+            <input type="number" step="any" class="form-control @error('price') is-invalid @enderror" id="price" name="price" value="{{ old('price', $sale->price ?? '') }}" min="0" required>
+            <button type="button" class="btn btn-outline-secondary btn-calculator-trigger" id="btnSaleCalculator" title="Calculator – perform calculations" aria-label="Open calculator">
+                <i class="fas fa-calculator"></i>
+            </button>
+        </div>
         @error('price')
-            <div class="invalid-feedback">{{ $message }}</div>
+            <div class="invalid-feedback d-block">{{ $message }}</div>
         @enderror
     </div>
     <div class="col-md-4 mb-3">
@@ -119,6 +124,8 @@
         @enderror
     </div>
 </div>
+@include('admin.components.calculator-modal')
+
 <div class="d-flex justify-content-between">
     <a href="{{ route('admin.sales.index') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left me-2"></i>Back

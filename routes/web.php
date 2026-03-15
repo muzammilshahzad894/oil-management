@@ -106,6 +106,7 @@ Route::middleware(['auth'])->group(function () {
     // Ledger (digital khatam)
     Route::prefix('admin/ledger')->name('admin.ledger.')->group(function () {
         Route::get('customers/{customer}/export', [LedgerCustomerController::class, 'export'])->name('customers.export');
+        Route::get('customers/{customer}/export-pdf', [LedgerCustomerController::class, 'exportPdf'])->name('customers.export-pdf');
         Route::post('customers/{customer}/transactions', [LedgerCustomerController::class, 'storeTransaction'])->name('customers.transactions.store');
         Route::put('customers/{customer}/transactions/{transaction}', [LedgerCustomerController::class, 'updateTransaction'])->name('customers.transactions.update');
         Route::delete('customers/{customer}/transactions/{transaction}', [LedgerCustomerController::class, 'destroyTransaction'])->name('customers.transactions.destroy');

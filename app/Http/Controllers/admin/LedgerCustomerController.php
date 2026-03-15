@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LedgerCustomer;
 use App\Models\LedgerTransaction;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Color;
@@ -253,5 +254,34 @@ class LedgerCustomerController extends Controller
         }, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
+    }
+
+    /**
+     * Export customer ledger as PDF.
+     */
+    public function exportPdf(LedgerCustomer $customer)
+    {
+        $transactions = $customer->transactions()->orderBy('transaction_date', 'desc')->orderBy('id', 'desc')->get();
+        $runningBalance = (float) $customer->balance;
+        $rows = [];
+        foreach ($transactions as $tx) {
+            $balanceAfter = $runningBalance;
+            $runningBalance -= $tx->type === 'received' ? (float) $tx->amount : -(float) $tx->amount;
+            $rows[] = [
+                'date' => $tx->transaction_date->format('D, d M Y · H:i'),
+                'description' => $tx->description ?? '—',
+                'you_gave' => $tx->type === 'gave' ? number_format($tx->amount, 0) : '',
+                'you_get' => $tx->type === 'received' ? number_format($tx->amount, 0) : '',
+                'balance' => 'Rs ' . number_format(abs($balanceAfter), 0),
+            ];
+        }
+        $balanceLabel = $customer->balance > 0 ? 'You will give' : ($customer->balance < 0 ? 'You will get' : 'Settled');
+        $pdf = Pdf::loadView('admin.ledger.customers.pdf', [
+            'customer' => $customer,
+            'rows' => $rows,
+            'balanceLabel' => $balanceLabel,
+        ]);
+        $filename = 'ledger_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $customer->name) . '_' . date('Y-m-d') . '.pdf';
+        return $pdf->download($filename);
     }
 }
