@@ -89,7 +89,10 @@
                 compute();
             } else if (c === '+' || c === '-' || c === '*' || c === '/') {
                 state.justComputed = false;
-                if (state.op !== null && state.prev !== null) compute();
+                // Only compute if user entered a second number (display !== prev). Otherwise they're just changing the operator (e.g. 9 * then /).
+                if (state.op !== null && state.prev !== null && state.display !== state.prev) {
+                    compute();
+                }
                 state.prev = state.display;
                 state.op = c;
             } else if (c === '.') {
