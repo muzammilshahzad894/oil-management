@@ -55,9 +55,12 @@
                 </a>
             </div>
             @if(request('customer_id'))
-            <div class="col-md-auto d-flex align-items-end">
+            <div class="col-md-auto d-flex align-items-end gap-2">
                 <a href="{{ route('admin.reports.customer.export', request()->all()) }}" class="btn btn-success" style="height: 38px;">
-                    <i class="fas fa-file-excel me-2"></i>Export Excel
+                    <i class="fas fa-file-excel me-2"></i>Download Excel
+                </a>
+                <a href="{{ route('admin.reports.customer.export-pdf', request()->all()) }}" class="btn btn-danger" style="height: 38px;">
+                    <i class="fas fa-file-pdf me-2"></i>Download PDF
                 </a>
             </div>
             @endif

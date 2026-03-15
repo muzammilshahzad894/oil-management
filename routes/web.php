@@ -101,6 +101,7 @@ Route::middleware(['auth'])->group(function () {
     // Reports
     Route::get('/admin/reports/customer', [ReportController::class, 'customer'])->name('admin.reports.customer');
     Route::get('/admin/reports/customer/export', [ReportController::class, 'exportExcel'])->name('admin.reports.customer.export');
+    Route::get('/admin/reports/customer/export-pdf', [ReportController::class, 'exportPdf'])->name('admin.reports.customer.export-pdf');
     Route::get('/admin/reports/profit-loss', [ReportController::class, 'profitLoss'])->name('admin.reports.profit-loss');
 
     // Ledger (digital khatam)
