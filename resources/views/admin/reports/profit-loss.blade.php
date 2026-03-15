@@ -24,12 +24,12 @@
             </div>
         </form>
 
-        <div class="row mb-4">
+        <div class="row mb-4 g-3">
             <div class="col-md-3">
-                <div class="stat-card border-secondary">
-                    <div class="stat-card-top d-flex align-items-center gap-2 mb-2">
-                        <div class="stat-icon bg-secondary bg-opacity-10 text-secondary">
-                            <i class="fas fa-tag"></i>
+                <div class="stat-card border-secondary h-100">
+                    <div class="stat-card-top d-flex align-items-center gap-3 mb-2">
+                        <div class="stat-icon stat-icon-secondary rounded-3 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-shopping-cart"></i>
                         </div>
                         <span class="stat-label mb-0">Purchase Price</span>
                     </div>
@@ -38,9 +38,9 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card border-primary">
-                    <div class="stat-card-top d-flex align-items-center gap-2 mb-2">
-                        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                <div class="stat-card border-primary h-100">
+                    <div class="stat-card-top d-flex align-items-center gap-3 mb-2">
+                        <div class="stat-icon stat-icon-primary rounded-3 d-flex align-items-center justify-content-center">
                             <i class="fas fa-file-invoice-dollar"></i>
                         </div>
                         <span class="stat-label mb-0">Selling Price</span>
@@ -50,9 +50,9 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card {{ ($profitOnSales ?? 0) >= 0 ? 'border-success' : 'border-danger' }}">
-                    <div class="stat-card-top d-flex align-items-center gap-2 mb-2">
-                        <div class="stat-icon {{ ($profitOnSales ?? 0) >= 0 ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger' }}">
+                <div class="stat-card {{ ($profitOnSales ?? 0) >= 0 ? 'border-success' : 'border-danger' }} h-100">
+                    <div class="stat-card-top d-flex align-items-center gap-3 mb-2">
+                        <div class="stat-icon {{ ($profitOnSales ?? 0) >= 0 ? 'stat-icon-success' : 'stat-icon-danger' }} rounded-3 d-flex align-items-center justify-content-center">
                             <i class="fas fa-chart-line"></i>
                         </div>
                         <span class="stat-label mb-0">Profit</span>
@@ -62,9 +62,9 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card border-warning">
-                    <div class="stat-card-top d-flex align-items-center gap-2 mb-2">
-                        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                <div class="stat-card border-warning h-100">
+                    <div class="stat-card-top d-flex align-items-center gap-3 mb-2">
+                        <div class="stat-icon stat-icon-warning rounded-3 d-flex align-items-center justify-content-center">
                             <i class="fas fa-clock"></i>
                         </div>
                         <span class="stat-label mb-0">Pending Amount</span>
@@ -91,5 +91,34 @@
     .stat-card .stat-label { font-size: 0.9rem; font-weight: 600; color: #4a5568; }
     .stat-value { margin-top: 0.25rem; }
     .stat-readable { margin-top: 0.2rem; font-weight: 500; }
+
+    /* Stat card icons: larger, rounded, with soft background and shadow */
+    .stat-icon {
+        width: 2.75rem;
+        height: 2.75rem;
+        font-size: 1.15rem;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    .stat-icon-secondary {
+        background: linear-gradient(135deg, rgba(108, 117, 125, 0.15) 0%, rgba(108, 117, 125, 0.08) 100%);
+        color: #6c757d;
+    }
+    .stat-icon-primary {
+        background: linear-gradient(135deg, rgba(13, 110, 253, 0.18) 0%, rgba(13, 110, 253, 0.08) 100%);
+        color: #0d6efd;
+    }
+    .stat-icon-success {
+        background: linear-gradient(135deg, rgba(25, 135, 84, 0.18) 0%, rgba(25, 135, 84, 0.08) 100%);
+        color: #198754;
+    }
+    .stat-icon-danger {
+        background: linear-gradient(135deg, rgba(220, 53, 69, 0.18) 0%, rgba(220, 53, 69, 0.08) 100%);
+        color: #dc3545;
+    }
+    .stat-icon-warning {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.12) 100%);
+        color: #b8860b;
+    }
 </style>
 @endsection

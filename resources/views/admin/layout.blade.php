@@ -941,6 +941,13 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(document).ready(function() {
+            // Prevent mouse wheel from changing number input values (use non-passive listener so preventDefault is allowed)
+            document.addEventListener('wheel', function(e) {
+                if (e.target.matches && e.target.matches('input[type="number"]')) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
             // Initialize Bootstrap tooltips
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
